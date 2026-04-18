@@ -1,4 +1,4 @@
-CREATE TABLE users
+CREATE TABLE IF NOT EXISTS users
 (
     id          INTEGER PRIMARY KEY,
     telegram_id INTEGER,
@@ -7,7 +7,7 @@ CREATE TABLE users
     lastname    VARCHAR(255)
 );
 
-CREATE TABLE friendships
+CREATE TABLE IF NOT EXISTS friendships
 (
     user_id   INTEGER NOT NULL,
     friend_id INTEGER NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE friendships
         FOREIGN KEY (friend_id) REFERENCES users (id)
 );
 
-CREATE TABLE spotify_tracks
+CREATE TABLE IF NOT EXISTSspotify_tracks
 (
     id                INTEGER PRIMARY KEY,
     track_id          INTEGER      NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE spotify_tracks
     album_image_url   TEXT(1000)   NOT NULL
 );
 
-CREATE TABLE shared_tracks
+CREATE TABLE IF NOT EXISTS shared_tracks
 (
     user_id          INTEGER NOT NULL,
     spotify_track_id INTEGER NOT NULL,
