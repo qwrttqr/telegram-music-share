@@ -1,6 +1,14 @@
 {
+    "name": "me/bakend-framework",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/",
+            "Framework\\": "Framework/"
+        }
+    },
     "require": {
         "doctrine/orm": "^3.6",
-        "doctrine/migrations": "^3.9"
+        "doctrine/migrations": "^3.9",
+        "php": ">=8.0"
     }
 }

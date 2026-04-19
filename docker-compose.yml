@@ -25,8 +25,11 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      PHP_IDE_CONFIG: "serverName=Docker Nginx"
     depends_on:
       - mariadb
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
     networks:
       - app-network
 
