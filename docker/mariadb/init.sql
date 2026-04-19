@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS telegram_music_app;
+USE `telegram_music_app`;
+
 CREATE TABLE IF NOT EXISTS users
 (
     id          INTEGER PRIMARY KEY,
@@ -5,19 +8,19 @@ CREATE TABLE IF NOT EXISTS users
     username    VARCHAR(255),
     firstname   VARCHAR(255),
     lastname    VARCHAR(255)
-);
+    );
 
 CREATE TABLE IF NOT EXISTS friendships
 (
     user_id   INTEGER NOT NULL,
     friend_id INTEGER NOT NULL,
     CONSTRAINT `fk_friendships_friend_id_users`
-        FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT `fk_friendships_user_id_users`
-        FOREIGN KEY (friend_id) REFERENCES users (id)
-);
+    FOREIGN KEY (friend_id) REFERENCES users (id)
+    );
 
-CREATE TABLE IF NOT EXISTSspotify_tracks
+CREATE TABLE IF NOT EXISTS spotify_tracks
 (
     id                INTEGER PRIMARY KEY,
     track_id          INTEGER      NOT NULL,
@@ -25,7 +28,7 @@ CREATE TABLE IF NOT EXISTSspotify_tracks
     album_name        VARCHAR(255) NOT NULL,
     album_uri         TEXT(1000)   NOT NULL,
     album_image_url   TEXT(1000)   NOT NULL
-);
+    );
 
 CREATE TABLE IF NOT EXISTS shared_tracks
 (
@@ -34,7 +37,7 @@ CREATE TABLE IF NOT EXISTS shared_tracks
     added_since      DATETIME,
     is_preferred     BOOLEAN DEFAULT FALSE,
     CONSTRAINT `fk_shared_tracks_spotify_track_id_spotify_tracks`
-        FOREIGN KEY (spotify_track_id) REFERENCES spotify_tracks (id),
+    FOREIGN KEY (spotify_track_id) REFERENCES spotify_tracks (id),
     CONSTRAINT `fk_shared_tracks_id_users`
-        FOREIGN KEY (user_id) REFERENCES users (id)
-)
+    FOREIGN KEY (user_id) REFERENCES users (id)
+    );

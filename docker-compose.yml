@@ -39,7 +39,7 @@ services:
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     volumes:
       - telegram_music_app_db_data:/var/lib/mysql
-      - ./docker/mariadb/init.sql:/docker-entrypoint-initdb.d
+      - ./docker/mariadb:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
     networks:
