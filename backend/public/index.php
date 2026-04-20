@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/../Framework/bootstrap.php';
 require_once __DIR__ . '/../vendor/autoload.php';
-use Framework\Application;
+
+use Framework\src\Application;
 
 $app = new Application();
 

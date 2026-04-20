@@ -15,7 +15,7 @@ services:
       - app-network
 
   php:
-    build: ./docker/php
+    build: ./backend
     container_name: app-backend
     volumes:
       - ./backend:/var/www/html
