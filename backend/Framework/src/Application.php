@@ -24,7 +24,19 @@ class Application
       // Will look up for all .php in given controller directories.
       $files = glob($controller . '/*.php');
       foreach ($files as $file) {
+        require_once $file;
         $className = $this->pathToClassName($file);
+
+        $reflection = new \ReflectionClass($className);
+        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+
+        foreach ($methods as $method) {
+          $attributes = $method->getAttributes(Route::class);
+          foreach ($attributes as $attribute) {
+            $route = $attribute->newInstance();
+
+          }
+        }
       }
     }
   }
@@ -37,7 +49,7 @@ class Application
   private function pathToClassName(string $file): string
   {
     // Replaces /var/www/html/src/Controllers/MyController/File.php into Controllers/MyController.
-    $relativePath = str_replace([realpath(PROJECT_ROOT . '/src/'), '.php'] , '', $file);
+    $relativePath = str_replace([PROJECT_ROOT . '/src/', '.php'], '', $file);
 
     return 'App\\' . str_replace('/', '\\', $relativePath);
   }
