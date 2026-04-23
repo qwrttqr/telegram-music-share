@@ -6,10 +6,15 @@ class Application
 {
   //private Router $router;
   private array $controllers = [];
-
-  public function __construct()
+  private array $routingMap = [];
+  private string|null $rootNamespace = null;
+  /**
+   * Entry point of whole framework
+   * @param $rootNamespace string - root namespace of an application
+   */
+  public function __construct(string $rootNamespace)
   {
-//    $this->router = new Router();
+    $this->rootNamespace = $rootNamespace;
   }
 
   public function addControllerDirectory(string $path): self
@@ -26,15 +31,17 @@ class Application
       foreach ($files as $file) {
         require_once $file;
         $className = $this->pathToClassName($file);
-
+        // Make reflecton of controller class
         $reflection = new \ReflectionClass($className);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
 
         foreach ($methods as $method) {
+          // Get route attributes
           $attributes = $method->getAttributes(Route::class);
           foreach ($attributes as $attribute) {
+            /** @var Route $route */
             $route = $attribute->newInstance();
-
+            $key = strtoupper($route->method) . ':' . $route->path;
           }
         }
       }
@@ -51,6 +58,6 @@ class Application
     // Replaces /var/www/html/src/Controllers/MyController/File.php into Controllers/MyController.
     $relativePath = str_replace([PROJECT_ROOT . '/src/', '.php'], '', $file);
 
-    return 'App\\' . str_replace('/', '\\', $relativePath);
+    return "$this->rootNamespace\\" . str_replace('/', '\\', $relativePath);
   }
 }
