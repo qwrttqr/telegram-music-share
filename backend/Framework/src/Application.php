@@ -41,7 +41,14 @@ class Application
           foreach ($attributes as $attribute) {
             /** @var Route $route */
             $route = $attribute->newInstance();
+
             $key = strtoupper($route->method) . ':' . $route->path;
+            $this->routingMap[$key] = [
+              'class' => $className,
+              'method' => $method->getName(),
+              'path' => $route->path,
+              'httpMethod' => strtoupper($route->method)
+            ];
           }
         }
       }

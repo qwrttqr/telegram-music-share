@@ -22,7 +22,7 @@ class Request implements RequestInterface
     $this->uri = $uri;
 
     if ($uri->getHost()) {
-      $this->headers['Host'] = [$uri->getHost()];
+      $this->headers['host'] = [$uri->getHost()];
     }
   }
 
@@ -74,11 +74,11 @@ class Request implements RequestInterface
     $host = $uri->getHost();
     if (!$preserveHost) {
       if ($host !== '') {
-        $clone->headers['Host'] = [$host];
+        $clone->headers['host'] = [$host];
       }
     } else {
-      if ((!isset($clone->headers['Host']) || empty($clone->headers['Host'])) && $host !== '') {
-        $clone->headers['Host'] = [$host];
+      if ((!isset($clone->headers['host']) || empty($clone->headers['host'])) && $host !== '') {
+        $clone->headers['host'] = [$host];
       }
     }
     return $clone;
@@ -102,27 +102,27 @@ class Request implements RequestInterface
   }
 
   /**
-   * Case-sensitive checker for presence of desired header.
+   * Case-insensitive checker for presence of desired header.
    * @param string $name
    * @return bool
    */
   public function hasHeader(string $name): bool
   {
-    return isset($this->headers[$name]);
+    return isset($this->headers[strtolower($name)]);
   }
 
   /**
-   * Case-sensitive helper for getting headers.
+   * Case-insensitive helper for getting headers.
    * @param string $name
    * @return array|string[]
    */
   public function getHeader(string $name): array
   {
-    return $this->headers[$name] ?? [];
+    return $this->headers[strtolower($name)] ?? [];
   }
 
   /**
-   * Case-sensitive helper for getting header-line.
+   * Case-insensitive helper for getting header-line.
    * @param string $name
    * @return string
    */
@@ -132,7 +132,7 @@ class Request implements RequestInterface
   }
 
   /**
-   * Case-sensitive helper for setting headers.
+   * Case-insensitive helper for setting headers.
    * @param string $name
    * @param $value
    * @return \Psr\Http\Message\MessageInterface
@@ -140,13 +140,13 @@ class Request implements RequestInterface
   public function withHeader(string $name, $value): \Psr\Http\Message\MessageInterface
   {
     $clone = clone $this;
-    $clone->headers[$name] = (array)$value;
+    $clone->headers[strtolower($name)] = (array)$value;
 
     return $clone;
   }
 
   /**
-   * Case-sensitive helper for adding value into already existing header.
+   * Case-insensitive helper for adding value into already existing header.
    * @param string $name
    * @param $value
    * @return \Psr\Http\Message\MessageInterface
@@ -154,12 +154,12 @@ class Request implements RequestInterface
   public function withAddedHeader(string $name, $value): \Psr\Http\Message\MessageInterface
   {
     $clone = clone $this;
-
-    if (!isset($clone->headers[$name])) {
-      $clone->headers[$name] = [];
+    $lowerName = strtolower($name);
+    if (!isset($clone->headers[$lowerName])) {
+      $clone->headers[$lowerName] = [];
     }
-    $clone->headers[$name] = array_merge(
-      $clone->headers[$name],
+    $clone->headers[$lowerName] = array_merge(
+      $clone->headers[$lowerName],
       (array)$value
     );
 
@@ -168,7 +168,9 @@ class Request implements RequestInterface
 
   public function withoutHeader(string $name): \Psr\Http\Message\MessageInterface
   {
-
+    $clone = clone $this;
+    unset($clone->headers[strtolower($name)]);
+    return $clone;
   }
 
   public function getBody(): \Psr\Http\Message\StreamInterface
