@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Http;
+namespace QwrttqrHTTP\Http;
 
 use MongoDB\BSON\PackedArray;
 use Psr\Http\Message\ResponseInterface;

@@ -1,6 +1,6 @@
 <?php
 define('PROJECT_ROOT', realpath(__DIR__ . '/..'));
-use Framework\src\Application;
+use QwrttqrHTTP\src\Application;
 
 /**
  * Entry point of an application.
@@ -10,5 +10,5 @@ return function (string $appRootNamespace) {
   $app = new Application($appRootNamespace);
 
   $app->addControllerDirectory(__DIR__ . '/../src/Controllers');
-  $app->discoverControllers();
+  $app->run();
 };

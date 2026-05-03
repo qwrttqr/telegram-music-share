@@ -1,9 +1,9 @@
 {
-    "name": "me/bakend-framework",
+    "name": "qwrttqr/qwrttqr-http",
     "autoload": {
         "psr-4": {
             "App\\": "src/",
-            "Framework\\": "Framework/"
+            "QwrttqrHTTP\\": "QwrttqrHTTP/"
         }
     },
     "require": {

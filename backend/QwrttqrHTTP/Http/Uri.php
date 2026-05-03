@@ -1,8 +1,8 @@
 <?php
 
-namespace Framework\Http;
+namespace QwrttqrHTTP\Http;
 
-use http\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
 
 class Uri implements UriInterface
@@ -35,7 +35,7 @@ class Uri implements UriInterface
     }
 
     $this->scheme = isset($decodedUri['scheme']) ? strtolower($decodedUri['scheme']) : '';
-    $this->user = $decodedUri['user'];
+    $this->user = $decodedUri['user'] ?? '';
     $this->password = $decodedUri['pass'] ?? null;
     $this->host = isset($decodedUri['host']) ? strtolower($decodedUri['host']) : '';
     $this->port = $decodedUri['port'] ?? null;
@@ -69,7 +69,7 @@ class Uri implements UriInterface
     }
 
     $port = $this->getPort();
-    if ($port !== '') {
+    if ($port) {
       $authority .= ':' . $port;
     }
 
@@ -145,31 +145,57 @@ class Uri implements UriInterface
 
   public function withHost(string $host): UriInterface
   {
-    // TODO: Implement withHost() method.
+    $clone = clone $this;
+    $clone->host = strtolower($host);
+    return $clone;
   }
 
   public function withPort(?int $port): UriInterface
   {
-    // TODO: Implement withPort() method.
+    $clone = clone $this;
+    $clone->port = $port;
+    return $clone;
   }
 
   public function withPath(string $path): UriInterface
   {
-    // TODO: Implement withPath() method.
+    $clone = clone $this;
+    $clone->path = $path;
+    return $clone;
   }
 
   public function withQuery(string $query): UriInterface
   {
-    // TODO: Implement withQuery() method.
+    $clone = clone $this;
+    $clone->query = $query;
+    return $clone;
   }
 
   public function withFragment(string $fragment): UriInterface
   {
-    // TODO: Implement withFragment() method.
+    $clone = clone $this;
+    $clone->fragment = $fragment;
+    return $clone;
   }
 
   public function __toString(): string
   {
-    // TODO: Implement __toString() method.
+    $stringUri = '';
+    if ($this->scheme !== '') {
+      $stringUri .= $this->scheme . ':';
+    }
+    $stringUri .= $this->scheme . ':';
+    $authority = $this->getAuthority();
+    if ($authority !== '') {
+      $stringUri .= '//' . $authority;
+    }
+    $stringUri .= $this->path;
+    if ($this->query !== '') {
+      $stringUri .= '?' . $this->query;
+    }
+    if ($this->fragment !== '') {
+      $stringUri .= '#' . $this->fragment;
+    }
+    return $stringUri;
   }
 }
