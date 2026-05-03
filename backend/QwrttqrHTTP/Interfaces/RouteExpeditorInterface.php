@@ -17,4 +17,6 @@ interface RouteExpeditorInterface
    * @return array
    */
   public function extractPathParamNames(string $route): array;
+
+  public function extractQueryParams(string $queryString): array;
 }

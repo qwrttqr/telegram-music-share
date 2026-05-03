@@ -1,6 +1,6 @@
 <?php
 
-namespace QwrttqrHTTP\src;
+namespace QwrttqrHTTP\Attributes;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 class Route
 {

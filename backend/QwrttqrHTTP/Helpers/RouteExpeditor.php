@@ -16,6 +16,7 @@ class RouteExpeditor implements RouteExpeditorInterface
 
     return self::$instance;
   }
+
   public function routeToRegexp(string $route): string
   {
     // Convert /user/{id} to #^/user/([^/]+)$#
@@ -29,5 +30,16 @@ class RouteExpeditor implements RouteExpeditorInterface
     // Returns: ['id', 'postId']
     preg_match_all('/\{([a-zA-Z0-9_]+)\}/', $route, $matches);
     return $matches[1];
+  }
+
+  public function extractQueryParams(string $queryString): array
+  {
+    $parsedParams = [];
+    $params = explode('&', $queryString);
+    foreach ($params as $param) {
+      [$paramName, $paramValue] = explode('=', $param);
+      $parsedParams[$paramName] = $paramValue;
+    }
+    return $parsedParams;
   }
 }

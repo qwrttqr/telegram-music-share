@@ -6,12 +6,14 @@ class MatchingRoute
 {
   public string $class;
   public string $method;
-  public array $params;
+  public array $pathParams;
+  public array $queryParams;
 
-  public function __construct(string $class, string $method, array $params)
+  public function __construct(string $class, string $method, array $pathParams, array $queryParams)
   {
     $this->class = $class;
     $this->method = $method;
-    $this->params = $params;
+    $this->pathParams = $pathParams;
+    $this->queryParams = $queryParams;
   }
 }

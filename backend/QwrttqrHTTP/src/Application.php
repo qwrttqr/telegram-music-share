@@ -2,11 +2,13 @@
 
 namespace QwrttqrHTTP\src;
 
-use QwrttqrHTTP\Http\Uri;
-use QwrttqrHTTP\Interfaces\RouteExpeditorInterface;
-use QwrttqrHTTP\Helpers\RouteExpeditor;
+use QwrttqrHTTP\Attributes\QueryParam;
+use QwrttqrHTTP\Attributes\Route;
 use QwrttqrHTTP\Exceptions\RouteNotFoundException;
 use QwrttqrHTTP\Helpers\MatchingRoute;
+use QwrttqrHTTP\Helpers\RouteExpeditor;
+use QwrttqrHTTP\Http\Uri;
+use QwrttqrHTTP\Interfaces\RouteExpeditorInterface;
 
 class Application
 {
@@ -44,19 +46,52 @@ class Application
   }
 
   /**
+   * Lookups for appropriate route in the current route map.
+   * @return null|MatchingRoute - MatchingRoute instance if this route is found(with info about handling controller), null otherwise.
+   * @throws RouteNotFoundException
+   */
+  private function findMatchingRoute(): ?MatchingRoute
+  {
+    $requestedMethod = $_SERVER['REQUEST_METHOD'];
+    $requestUri = $_SERVER['REQUEST_URI'];
+    $parsedUri = new Uri($requestUri);
+    $requestedPath = $parsedUri->getPath();
+    $queryString = $parsedUri->getQuery();
+    foreach ($this->routingMap as $key => $routeData) {
+      [$routeMethod, $routePath] = explode(':', $key, 2);
+      if ($routeMethod !== $requestedMethod) {
+        continue;
+      }
+      $pattern = $this->routeExpeditor->routeToRegexp($routePath);
+      // Check if requested URI correspond to route and if that -> get param values.
+      if (preg_match($pattern, $requestedPath, $matches)) {
+        array_shift($matches); // Remove full path, keep only captured groups
+        // Get path params from key from route map
+        $paramNames = $this->routeExpeditor->extractPathParamNames($routePath);
+        // Matches contains actual param values
+        $pathParams = array_combine($paramNames, $matches);
+        $queryParams = $this->routeExpeditor->extractQueryParams($queryString);
+        return new MatchingRoute($routeData['class'], $routeData['method'], $pathParams, $queryParams);
+      }
+    }
+    throw new RouteNotFoundException("Route not found [$requestUri}");
+  }
+
+  /**
    * @throws \ReflectionException
    */
   private function dispatch(MatchingRoute $route)
   {
     $className = $route->class;
     $methodName = $route->method;
-    $params = $route->params;
+    $pathParams = $route->pathParams;
+    $queryParams = $route->queryParams;
 
     $controller = $this->instantiateController($className);
 
     $reflectionMethod = new \ReflectionMethod($controller, $methodName);
 
-    $args = $this->resolveMethodArguments($reflectionMethod, $params);
+    $args = $this->resolveMethodArguments($reflectionMethod, $pathParams, $queryParams);
     $reflectionMethod->invokeArgs($controller, $args);
   }
 
@@ -67,16 +102,29 @@ class Application
     return new $className();
   }
 
-  private function resolveMethodArguments(\ReflectionMethod $method, array $routeParams)
+  private function resolveMethodArguments(\ReflectionMethod $method, array $pathParams, array $queryParams)
   {
     $args = [];
     $methodParams = $method->getParameters();
+    // Get base params and query params
+
     foreach ($methodParams as $param) {
       $paramName = $param->getName();
       $paramType = $param->getType();
-
-      if (isset($routeParams[$paramName])) {
-        $args[] = $this->castParamValue($routeParams[$paramName], $paramType);
+      $queryParamAttributes = $param->getAttributes(QueryParam::class);
+      // Get values for attributes separately
+      if (sizeof($queryParamAttributes) > 0) {
+        if (isset($queryParams[$paramName])) {
+          $args[] = $this->castParamValue($queryParams[$paramName], $paramType);
+          continue;
+        }
+        if ($param->isDefaultValueAvailable()) {
+          $args[] = $param->getDefaultValue();
+          continue;
+        }
+      }
+      if (isset($pathParams[$paramName])) {
+        $args[] = $this->castParamValue($pathParams[$paramName], $paramType);
         continue;
       }
 
@@ -151,36 +199,5 @@ class Application
     $relativePath = str_replace([PROJECT_ROOT . '/src/', '.php'], '', $file);
 
     return "$this->rootNamespace\\" . str_replace('/', '\\', $relativePath);
-  }
-
-  /**
-   * Lookups for appropriate route in the current route map.
-   * @return null|MatchingRoute - MatchingRoute instance if this route is found(with info about handling controller), null otherwise.
-   * @throws RouteNotFoundException
-   */
-  private function findMatchingRoute(): ?MatchingRoute
-  {
-    $requestedMethod = $_SERVER['REQUEST_METHOD'];
-    $requestUri = $_SERVER['REQUEST_URI'];
-    $parsedUri = new Uri($requestUri);
-    $requestedPath = $parsedUri->getPath();
-    foreach ($this->routingMap as $key => $routeData) {
-      [$routeMethod, $routePath] = explode(':', $key, 2);
-      if ($routeMethod !== $requestedMethod) {
-        continue;
-      }
-      $pattern = $this->routeExpeditor->routeToRegexp($routePath);
-      // Check if requested URI correspond to route and if that -> get param values.
-      if (preg_match($pattern, $requestedPath, $matches)) {
-        array_shift($matches); // Remove full path, keep only captured groups
-        // Get path params from key from route map
-        $paramNames = $this->routeExpeditor->extractPathParamNames($routePath);
-        // Matches contains actual param values
-        $params = array_combine($paramNames, $matches);
-
-        return new MatchingRoute($routeData['class'], $routeData['method'], $params);
-      }
-    }
-    throw new RouteNotFoundException("Route not found [$requestUri}");
   }
 }

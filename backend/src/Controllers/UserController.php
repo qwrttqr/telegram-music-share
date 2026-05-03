@@ -2,7 +2,8 @@
 
 namespace App\Controllers;
 
-use QwrttqrHTTP\src\Route;
+use QwrttqrHTTP\Attributes\QueryParam;
+use QwrttqrHTTP\Attributes\Route;
 
 class UserController
 {
@@ -12,10 +13,10 @@ class UserController
     // public function __construct(private DatabaseService $db)
   }
 
-  #[Route('/foo/{userid}/123', 'GET')]
-  public function myFunctionFoo(int $userid): void
+  #[Route('/foo/{userid}/some', 'GET')]
+  public function myFunctionFoo(int $userid, #[QueryParam] string $username, #[QueryParam] string $lastname): void
   {
-    echo "User ID: $userid";
+    echo "User ID: $userid Username: $username Lastname: $lastname";
   }
 
   #[Route('/users/{id}/posts/{postId}', 'GET')]
