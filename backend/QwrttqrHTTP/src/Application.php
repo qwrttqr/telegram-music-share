@@ -170,10 +170,11 @@ class Application
         continue;
       }
       $pattern = $this->routeExpeditor->routeToRegexp($routePath);
+      // Check if requested URI correspond to route and if that -> get param values.
       if (preg_match($pattern, $requestedPath, $matches)) {
         array_shift($matches); // Remove full path, keep only captured groups
-
-        $paramNames = $this->routeExpeditor->extractParamNames($routePath);
+        // Get path params from key from route map
+        $paramNames = $this->routeExpeditor->extractPathParamNames($routePath);
         // Matches contains actual param values
         $params = array_combine($paramNames, $matches);
 

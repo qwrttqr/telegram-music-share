@@ -16,5 +16,5 @@ interface RouteExpeditorInterface
    * @param string $route
    * @return array
    */
-  public function extractParamNames(string $route): array;
+  public function extractPathParamNames(string $route): array;
 }

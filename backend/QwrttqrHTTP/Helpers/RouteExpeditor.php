@@ -23,7 +23,7 @@ class RouteExpeditor implements RouteExpeditorInterface
     return '#^' . $pattern . '$#';
   }
 
-  public function extractParamNames(string $route): array
+  public function extractPathParamNames(string $route): array
   {
     // Extract parameter names from /user/{id}/posts/{postId}
     // Returns: ['id', 'postId']
