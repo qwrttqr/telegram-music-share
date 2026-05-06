@@ -198,4 +198,10 @@ class Uri implements UriInterface
     }
     return $stringUri;
   }
+
+  public static function createFromGlobals(): self
+  {
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    return new self($uri);
+  }
 }

@@ -137,7 +137,7 @@ class Request implements RequestInterface
    * @param $value
    * @return \Psr\Http\Message\MessageInterface
    */
-  public function withHeader(string $name, $value): \Psr\Http\Message\MessageInterface
+  public function withHeader(string $name, $value): self
   {
     $clone = clone $this;
     $clone->headers[strtolower($name)] = (array)$value;
@@ -149,9 +149,9 @@ class Request implements RequestInterface
    * Case-insensitive helper for adding value into already existing header.
    * @param string $name
    * @param $value
-   * @return \Psr\Http\Message\MessageInterface
+   * @return self
    */
-  public function withAddedHeader(string $name, $value): \Psr\Http\Message\MessageInterface
+  public function withAddedHeader(string $name, $value): self
   {
     $clone = clone $this;
     $lowerName = strtolower($name);
@@ -166,7 +166,7 @@ class Request implements RequestInterface
     return $clone;
   }
 
-  public function withoutHeader(string $name): \Psr\Http\Message\MessageInterface
+  public function withoutHeader(string $name): self
   {
     $clone = clone $this;
     unset($clone->headers[strtolower($name)]);
@@ -178,10 +178,33 @@ class Request implements RequestInterface
     return $this->body;
   }
 
-  public function withBody(\Psr\Http\Message\StreamInterface $body): \Psr\Http\Message\MessageInterface
+  public function withBody(\Psr\Http\Message\StreamInterface $body): self
   {
     $clone = clone $this;
-    $this->body = $body;
+    $clone->body = $body;
     return $clone;
+  }
+
+  public static function createFromGlobals(): self
+  {
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $uri = Uri::createFromGlobals();
+
+    $headers = [];
+
+    foreach ($_SERVER as $key => $value) {
+      if (strpos($key, 'HTTP_') === 0) {
+        $headerName = str_replace('_', '-', substr($key, 5));
+        $headers[$headerName] = $value;
+      }
+    }
+
+    $body = new Stream(fopen('php://input', 'r'));
+
+    $req = new self($method, $uri);
+    foreach ($headers as $key => $value) {
+      $req = $req->withHeader($key, $value);
+    }
+    return $req->withBody($body);
   }
 }

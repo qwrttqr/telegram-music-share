@@ -2,6 +2,7 @@
 
 namespace QwrttqrHTTP\Helpers;
 
+use QwrttqrHTTP\Exceptions\MissingParamException;
 use QwrttqrHTTP\Interfaces\RouteExpeditorInterface;
 
 class RouteExpeditor implements RouteExpeditorInterface
@@ -34,6 +35,7 @@ class RouteExpeditor implements RouteExpeditorInterface
 
   public function extractQueryParams(string $queryString): array
   {
+    if (!$queryString) return
     $parsedParams = [];
     $params = explode('&', $queryString);
     foreach ($params as $param) {

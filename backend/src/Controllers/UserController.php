@@ -4,15 +4,10 @@ namespace App\Controllers;
 
 use QwrttqrHTTP\Attributes\QueryParam;
 use QwrttqrHTTP\Attributes\Route;
+use QwrttqrHTTP\Wrappers\ControllerWrapper;
 
-class UserController
+class UserController extends ControllerWrapper
 {
-  public function __construct()
-  {
-    // Or inject dependencies:
-    // public function __construct(private DatabaseService $db)
-  }
-
   #[Route('/foo/{userid}/some', 'GET')]
   public function myFunctionFoo(int $userid, #[QueryParam] string $username, #[QueryParam] string $lastname): void
   {

@@ -2,8 +2,11 @@
 
 namespace QwrttqrHTTP\src;
 
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use QwrttqrHTTP\Attributes\QueryParam;
 use QwrttqrHTTP\Attributes\Route;
+use QwrttqrHTTP\Exceptions\MissingParamException;
 use QwrttqrHTTP\Exceptions\RouteNotFoundException;
 use QwrttqrHTTP\Helpers\MatchingRoute;
 use QwrttqrHTTP\Helpers\RouteExpeditor;
@@ -41,8 +44,12 @@ class Application
   {
     $this->discoverControllers();
     // TODO: Add middlewares and authentication handling.
-    $route = $this->findMatchingRoute();
-    $this->dispatch($route);
+    try {
+      $route = $this->findMatchingRoute();
+      $this->dispatch($route);
+    } catch (\Exception $e) {
+      $this->handleError($e);
+    }
   }
 
   /**
@@ -99,10 +106,18 @@ class Application
   {
     $reflectionClass = new \ReflectionClass($className);
     // TODO: Add support of constructor args
-    return new $className();
+    $controller = new $className();
+    if ($controller instanceof \QwrttqrHTTP\Wrappers\ControllerWrapper) {
+      $request = $this->createPsr7Request();
+      $response = $this->createPsr7Response();
+      $controller->setRequest($request);
+      $controller->setResponse($response);
+    }
+
+    return $controller;
   }
 
-  private function resolveMethodArguments(\ReflectionMethod $method, array $pathParams, array $queryParams)
+  private function resolveMethodArguments(\ReflectionMethod $method, array $pathParams, array $queryParams): array
   {
     $args = [];
     $methodParams = $method->getParameters();
@@ -117,10 +132,12 @@ class Application
         if (isset($queryParams[$paramName])) {
           $args[] = $this->castParamValue($queryParams[$paramName], $paramType);
           continue;
-        }
-        if ($param->isDefaultValueAvailable()) {
+        } else if ($param->isDefaultValueAvailable()) {
           $args[] = $param->getDefaultValue();
           continue;
+        } else {
+          // If no param set - throw exception
+          throw new MissingParamException("Missing param $paramName");
         }
       }
       if (isset($pathParams[$paramName])) {
@@ -199,5 +216,45 @@ class Application
     $relativePath = str_replace([PROJECT_ROOT . '/src/', '.php'], '', $file);
 
     return "$this->rootNamespace\\" . str_replace('/', '\\', $relativePath);
+  }
+
+  private function createPsr7Request(): RequestInterface
+  {
+    return \QwrttqrHTTP\Http\Request::createFromGlobals();
+  }
+
+  private function createPsr7Response(): ResponseInterface
+  {
+    return new \QwrttqrHTTP\Http\Response();
+  }
+
+  private function sendResponse(ResponseInterface $response): void
+  {
+    http_response_code($response->getStatusCode());
+
+    foreach ($response->getHeaders() as $name => $values) {
+      foreach ($values as $value) {
+        header("$name: $value", false);
+      }
+    }
+
+    $body = (string)$response->getBody();
+    echo $body;
+  }
+
+  private function handleError(\Exception $exception)
+  {
+    $response = $this->createPsr7Response();
+    switch (true) {
+      case $exception instanceof RouteNotFoundException:
+        $response = $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        $body = json_encode([
+          'error' => 'Not found',
+          'message' => $exception->getMessage(),
+          'status' => 404
+        ]);
+        $response->getBody()->write($body);
+        $this->sendResponse($response);
+    }
   }
 }

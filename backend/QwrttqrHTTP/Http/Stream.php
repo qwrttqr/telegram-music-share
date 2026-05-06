@@ -79,7 +79,7 @@ class Stream implements StreamInterface
 
   public function seek(int $offset, int $whence = SEEK_SET): void
   {
-    if (!$this->resource || $this->isSeekable()) {
+    if (!$this->resource || !$this->isSeekable()) {
       throw new \RuntimeException('Resource is not seekable');
     }
     if (fseek($this->resource, $offset, $whence) === -1) {
