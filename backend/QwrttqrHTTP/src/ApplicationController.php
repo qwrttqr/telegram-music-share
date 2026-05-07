@@ -2,24 +2,26 @@
 
 namespace QwrttqrHTTP\src;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use QwrttqrHTTP\Attributes\QueryParam;
 use QwrttqrHTTP\Attributes\Route;
 use QwrttqrHTTP\Exceptions\MissingParamException;
 use QwrttqrHTTP\Exceptions\RouteNotFoundException;
+use QwrttqrHTTP\Helpers\HttpBroker;
 use QwrttqrHTTP\Helpers\MatchingRoute;
 use QwrttqrHTTP\Helpers\RouteExpeditor;
 use QwrttqrHTTP\Http\Uri;
+use QwrttqrHTTP\Interfaces\HttpBrokerInterface;
 use QwrttqrHTTP\Interfaces\RouteExpeditorInterface;
+use ReflectionException;
+use RuntimeException;
 
-class Application
+class ApplicationController
 {
   //private Router $router;
   private array $controllers = [];
   private array $routingMap = [];
   private string|null $rootNamespace = null;
   private RouteExpeditorInterface $routeExpeditor;
+  private HttpBrokerInterface $httpBroker;
 
   /**
    * Entry point of whole framework
@@ -27,7 +29,8 @@ class Application
    */
   public function __construct(string $rootNamespace)
   {
-    $this->routeExpeditor = new RouteExpeditor();
+    $this->routeExpeditor = RouteExpeditor::getInstance();
+    $this->httpBroker = HttpBroker::getInstance();
     $this->rootNamespace = $rootNamespace;
   }
 
@@ -37,10 +40,7 @@ class Application
     return $this;
   }
 
-  /**
-   * @throws RouteNotFoundException
-   */
-  public function run()
+  public function run(): void
   {
     $this->discoverControllers();
     // TODO: Add middlewares and authentication handling.
@@ -85,7 +85,8 @@ class Application
   }
 
   /**
-   * @throws \ReflectionException
+   * @throws ReflectionException
+   * @throws MissingParamException
    */
   private function dispatch(MatchingRoute $route)
   {
@@ -102,60 +103,56 @@ class Application
     $reflectionMethod->invokeArgs($controller, $args);
   }
 
-  private function instantiateController(string $className)
-  {
-    $reflectionClass = new \ReflectionClass($className);
-    // TODO: Add support of constructor args
-    $controller = new $className();
-    if ($controller instanceof \QwrttqrHTTP\Wrappers\ControllerWrapper) {
-      $request = $this->createPsr7Request();
-      $response = $this->createPsr7Response();
-      $controller->setRequest($request);
-      $controller->setResponse($response);
-    }
-
-    return $controller;
-  }
-
+  /**
+   * @throws MissingParamException
+   */
   private function resolveMethodArguments(\ReflectionMethod $method, array $pathParams, array $queryParams): array
   {
     $args = [];
     $methodParams = $method->getParameters();
-    // Get base params and query params
-
+    $actualParams = array_merge($pathParams, $queryParams);
     foreach ($methodParams as $param) {
-      $paramName = $param->getName();
-      $paramType = $param->getType();
-      $queryParamAttributes = $param->getAttributes(QueryParam::class);
-      // Get values for attributes separately
-      if (sizeof($queryParamAttributes) > 0) {
-        if (isset($queryParams[$paramName])) {
-          $args[] = $this->castParamValue($queryParams[$paramName], $paramType);
-          continue;
-        } else if ($param->isDefaultValueAvailable()) {
-          $args[] = $param->getDefaultValue();
-          continue;
-        } else {
-          // If no param set - throw exception
-          throw new MissingParamException("Missing param $paramName");
-        }
-      }
-      if (isset($pathParams[$paramName])) {
-        $args[] = $this->castParamValue($pathParams[$paramName], $paramType);
-        continue;
-      }
-
-      if ($param->isDefaultValueAvailable()) {
-        $args[] = $param->getDefaultValue();
-        continue;
-      }
-
-      throw new \RuntimeException(
-        "Cannot resolve parameter '$paramName' for method {$method->getName()}"
-      );
+      $this->resolveArgsToTypes($args, $param, $method, $actualParams);
     }
 
     return $args;
+  }
+
+  /**
+   * @param array $args - Arguments array
+   * @param \ReflectionParameter $param
+   * @param \ReflectionMethod $method
+   * @param array $actualParams
+   * @return void
+   * @throws MissingParamException
+   */
+  private function resolveArgsToTypes(array &$args, \ReflectionParameter $param, \ReflectionMethod $method, array $actualParams): void
+  {
+    $paramName = $param->getName();
+    $paramType = $param->getType();
+    if (isset($actualParams[$paramName])) {
+      $args[] = $this->castParamValue($actualParams[$paramName], $paramType);
+    } else if ($param->isDefaultValueAvailable()) {
+      $args[] = $param->getDefaultValue();
+    } else if (!$param->allowsNull()) {
+      // If no param set - throw exception
+      throw new MissingParamException("Missing param $paramName");
+    } else {
+      throw new RuntimeException("Cannot resolve parameter $param->name in method $method->name");
+    }
+
+  }
+
+  /**
+   * @throws ReflectionException
+   */
+  private function instantiateController(string $className)
+  {
+    $reflectionClass = new \ReflectionClass($className);
+    // TODO: Add support of constructor args
+    $request = $this->httpBroker->createPsr7Request();
+    $response = $this->httpBroker->createPsr7Response();
+    return new $className($request, $response);
   }
 
   private function castParamValue(string $value, ?\ReflectionType $type): mixed
@@ -218,43 +215,27 @@ class Application
     return "$this->rootNamespace\\" . str_replace('/', '\\', $relativePath);
   }
 
-  private function createPsr7Request(): RequestInterface
-  {
-    return \QwrttqrHTTP\Http\Request::createFromGlobals();
-  }
-
-  private function createPsr7Response(): ResponseInterface
-  {
-    return new \QwrttqrHTTP\Http\Response();
-  }
-
-  private function sendResponse(ResponseInterface $response): void
-  {
-    http_response_code($response->getStatusCode());
-
-    foreach ($response->getHeaders() as $name => $values) {
-      foreach ($values as $value) {
-        header("$name: $value", false);
-      }
-    }
-
-    $body = (string)$response->getBody();
-    echo $body;
-  }
-
   private function handleError(\Exception $exception)
   {
-    $response = $this->createPsr7Response();
+    $response = $this->httpBroker->createPsr7Response()->withHeader('Content-Type', 'application/json');
     switch (true) {
       case $exception instanceof RouteNotFoundException:
-        $response = $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        $response = $response->withStatus(404);
         $body = json_encode([
           'error' => 'Not found',
           'message' => $exception->getMessage(),
-          'status' => 404
         ]);
         $response->getBody()->write($body);
-        $this->sendResponse($response);
+        $this->httpBroker->sendResponse($response);
+        break;
+      case $exception instanceof MissingParamException:
+        $response = $response->withStatus(400);
+        $body = json_encode([
+          'error' => 'Missing param',
+          'message' => $exception->getMessage(),
+        ]);
+        $response->getBody()->write($body);
+        $this->httpBroker->sendResponse($response);
     }
   }
 }
