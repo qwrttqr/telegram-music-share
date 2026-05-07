@@ -4,16 +4,19 @@ namespace QwrttqrHTTP\Wrappers;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use QwrttqrHTTP\DB\DoctrineManager;
 
 abstract class ControllerWrapper
 {
   private RequestInterface $request;
   private ResponseInterface $response;
 
+  private DoctrineManager $doctrineManager;
   public function __construct(RequestInterface $request, ResponseInterface $response)
   {
     $this->request = $request;
     $this->response = $response;
+    $this->doctrineManager = new DoctrineManager(PROJECT_ROOT . '/src/config/conf.php');
   }
 
   public function getRequest(): RequestInterface
@@ -48,5 +51,13 @@ abstract class ControllerWrapper
     $this->response = $this->response->withStatus($status)->withHeader('Content-Type', 'text/html');
     $this->response->getBody()->write($content);
     return $this->response;
+  }
+
+  /**
+   * @throws \Exception
+   */
+  public function connection(string $name): \Doctrine\ORM\EntityManagerInterface
+  {
+    return $this->doctrineManager->getEntityManager($name);
   }
 }

@@ -12,6 +12,7 @@ class UserController extends ControllerWrapper
   public function myFunctionFoo(int $userid, #[QueryParam] string $username, #[QueryParam] string $lastname): void
   {
     echo "User ID: $userid Username: $username Lastname: $lastname";
+    $this->connection('default');
   }
 
   #[Route('/users/{id}/posts/{postId}', 'GET')]

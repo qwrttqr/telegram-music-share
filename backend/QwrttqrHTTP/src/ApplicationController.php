@@ -88,7 +88,7 @@ class ApplicationController
    * @throws ReflectionException
    * @throws MissingParamException
    */
-  private function dispatch(MatchingRoute $route)
+  private function dispatch(MatchingRoute $route): void
   {
     $className = $route->class;
     $methodName = $route->method;
@@ -100,7 +100,28 @@ class ApplicationController
     $reflectionMethod = new \ReflectionMethod($controller, $methodName);
 
     $args = $this->resolveMethodArguments($reflectionMethod, $pathParams, $queryParams);
-    $reflectionMethod->invokeArgs($controller, $args);
+
+    // Start output buffering
+    ob_start();
+
+    try {
+      $result = $reflectionMethod->invokeArgs($controller, $args);
+
+      // If the method returned a response, use it
+      if ($result instanceof \Psr\Http\Message\ResponseInterface) {
+        $response = $result;
+      } else {
+        // Otherwise, get the buffered output
+        $output = ob_get_clean();
+        $response = $this->httpBroker->createPsr7Response();
+        $response->getBody()->write($output);
+      }
+
+      $this->httpBroker->sendResponse($response);
+    } catch (\Exception $e) {
+      ob_end_clean();
+      throw $e;
+    }
   }
 
   /**
@@ -143,12 +164,8 @@ class ApplicationController
 
   }
 
-  /**
-   * @throws ReflectionException
-   */
   private function instantiateController(string $className)
   {
-    $reflectionClass = new \ReflectionClass($className);
     // TODO: Add support of constructor args
     $request = $this->httpBroker->createPsr7Request();
     $response = $this->httpBroker->createPsr7Response();
@@ -215,7 +232,7 @@ class ApplicationController
     return "$this->rootNamespace\\" . str_replace('/', '\\', $relativePath);
   }
 
-  private function handleError(\Exception $exception)
+  private function handleError(\Exception $exception): void
   {
     $response = $this->httpBroker->createPsr7Response()->withHeader('Content-Type', 'application/json');
     switch (true) {
@@ -226,7 +243,6 @@ class ApplicationController
           'message' => $exception->getMessage(),
         ]);
         $response->getBody()->write($body);
-        $this->httpBroker->sendResponse($response);
         break;
       case $exception instanceof MissingParamException:
         $response = $response->withStatus(400);
@@ -235,7 +251,16 @@ class ApplicationController
           'message' => $exception->getMessage(),
         ]);
         $response->getBody()->write($body);
-        $this->httpBroker->sendResponse($response);
+        break;
+      default:
+        $response = $response->withStatus(500);
+        $body = json_encode([
+          'error' => 'Server error',
+          'message' => "Some error occurred on server side, please, contact us"
+        ]);
+        $response->getBody()->write($body);
+        break;
     }
+    $this->httpBroker->sendResponse($response);
   }
 }
