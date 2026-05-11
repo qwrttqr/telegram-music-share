@@ -10,6 +10,7 @@ use QwrttqrHTTP\Helpers\MatchingRoute;
 use QwrttqrHTTP\Helpers\RouteExpeditor;
 use QwrttqrHTTP\Http\Uri;
 use QwrttqrHTTP\Interfaces\HttpBrokerInterface;
+use QwrttqrHTTP\Interfaces\MiddlewareInterface;
 use QwrttqrHTTP\Interfaces\RouteExpeditorInterface;
 use ReflectionException;
 use RuntimeException;
@@ -18,6 +19,7 @@ class ApplicationController
 {
   //private Router $router;
   private array $controllers = [];
+  private array $middlewares = [];
   private array $routingMap = [];
   private string|null $rootNamespace = null;
   private RouteExpeditorInterface $routeExpeditor;
@@ -40,10 +42,14 @@ class ApplicationController
     return $this;
   }
 
+  public function addMiddleware(MiddlewareInterface $middleware)
+  {
+
+  }
   public function run(): void
   {
+
     $this->discoverControllers();
-    // TODO: Add middlewares and authentication handling.
     try {
       $route = $this->findMatchingRoute();
       $this->dispatch($route);
@@ -54,10 +60,10 @@ class ApplicationController
 
   /**
    * Lookups for appropriate route in the current route map.
-   * @return null|MatchingRoute - MatchingRoute instance if this route is found(with info about handling controller), null otherwise.
+   * @return MatchingRoute - MatchingRoute instance if this route is found(with info about handling controller), null otherwise.
    * @throws RouteNotFoundException
    */
-  private function findMatchingRoute(): ?MatchingRoute
+  private function findMatchingRoute(): MatchingRoute
   {
     $requestedMethod = $_SERVER['REQUEST_METHOD'];
     $requestUri = $_SERVER['REQUEST_URI'];

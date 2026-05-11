@@ -8,6 +8,9 @@ use QwrttqrHTTP\Wrappers\ControllerWrapper;
 
 class UserController extends ControllerWrapper
 {
+  /**
+   * @throws \Exception
+   */
   #[Route('/foo/{userid}/some', 'GET')]
   public function myFunctionFoo(int $userid, #[QueryParam] string $username, #[QueryParam] string $lastname): void
   {
