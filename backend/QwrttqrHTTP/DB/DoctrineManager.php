@@ -6,17 +6,14 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMSetup;
-use http\Params;
 
 class DoctrineManager
 {
-  private array $configurations = [];
   private array $entityManagers = [];
-  private string $defaultConnection;
   private array $connectionsConfig = [];
   private DsnParser $dsnParser;
 
-  public function __construct(private string $configFile, private bool $isDevMode = false)
+  public function __construct(private readonly string $configFile, private readonly bool $isDevMode = false)
   {
     $this->loadConfig($this->configFile);
     $this->dsnParser = DsnParser::getInstance();
