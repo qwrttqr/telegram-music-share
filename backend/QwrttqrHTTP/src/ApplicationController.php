@@ -12,6 +12,7 @@ use QwrttqrHTTP\Http\Uri;
 use QwrttqrHTTP\Interfaces\HttpBrokerInterface;
 use QwrttqrHTTP\Interfaces\MiddlewareInterface;
 use QwrttqrHTTP\Interfaces\RouteExpeditorInterface;
+use QwrttqrHTTP\Middlewares\MiddlewareHandler;
 use ReflectionException;
 use RuntimeException;
 
@@ -21,9 +22,10 @@ class ApplicationController
   private array $controllers = [];
   private array $middlewares = [];
   private array $routingMap = [];
-  private string|null $rootNamespace = null;
+  private string|null $rootNamespace;
   private RouteExpeditorInterface $routeExpeditor;
   private HttpBrokerInterface $httpBroker;
+  private MiddlewareHandler $middlewareHandler;
 
   /**
    * Entry point of whole framework
@@ -34,6 +36,7 @@ class ApplicationController
     $this->routeExpeditor = RouteExpeditor::getInstance();
     $this->httpBroker = HttpBroker::getInstance();
     $this->rootNamespace = $rootNamespace;
+    $this->middlewareHandler =new MiddlewareHandler();
   }
 
   public function addControllerDirectory(string $path): self
@@ -42,17 +45,31 @@ class ApplicationController
     return $this;
   }
 
-  public function addMiddleware(MiddlewareInterface $middleware)
+  public function addMiddlewares(array $middlewares): void
   {
+    foreach ($middlewares as $middleware) {
+      if (!$middleware instanceof MiddlewareInterface) {
+        throw new \InvalidArgumentException(
+          "All middlewares must implement " . MiddlewareInterface::class
+        );
+      }
+    }
 
+    $this->middlewareHandler->addMiddlewares($middlewares);
   }
   public function run(): void
   {
+    $request = $this->httpBroker->createPsr7Request();
+    $response = $this->httpBroker->createPsr7Response();
 
     $this->discoverControllers();
     try {
       $route = $this->findMatchingRoute();
-      $this->dispatch($route);
+      $finalHandler = function ($request, $response) use ($route) {
+        return $this->dispatch($route);
+      };
+      $finalResponse = $this->middlewareHandler->handle($route, $request, $response, $finalHandler);
+      $this->httpBroker->sendResponse($finalResponse);
     } catch (\Exception $e) {
       $this->handleError($e);
     }
@@ -94,7 +111,7 @@ class ApplicationController
    * @throws ReflectionException
    * @throws MissingParamException
    */
-  private function dispatch(MatchingRoute $route): void
+  private function dispatch(MatchingRoute $route): \Psr\Http\Message\ResponseInterface
   {
     $className = $route->class;
     $methodName = $route->method;
@@ -116,14 +133,13 @@ class ApplicationController
       // If the method returned a response, use it
       if ($result instanceof \Psr\Http\Message\ResponseInterface) {
         $response = $result;
-      } else {
-        // Otherwise, get the buffered output
-        $output = ob_get_clean();
-        $response = $this->httpBroker->createPsr7Response();
-        $response->getBody()->write($output);
       }
+      // Otherwise, get the buffered output
+      $output = ob_get_clean();
+      $response = $this->httpBroker->createPsr7Response();
+      $response->getBody()->write($output);
+      return $response;
 
-      $this->httpBroker->sendResponse($response);
     } catch (\Exception $e) {
       ob_end_clean();
       throw $e;

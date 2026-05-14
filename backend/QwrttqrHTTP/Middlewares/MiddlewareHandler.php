@@ -2,21 +2,16 @@
 
 namespace QwrttqrHTTP\Middlewares;
 
-use http\Env\Request;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use QwrttqrHTTP\Helpers\MatchingRoute;
 use QwrttqrHTTP\Interfaces\MiddlewareInterface;
 
 class MiddlewareHandler
 {
-  private array $middlewares;
+  private array $middlewares = []; // Initialize array
   private int $index;
 
-  /**
-   * @param MiddlewareInterface[] $middlewares
-   * @return static
-   */
   public function addMiddlewares(array $middlewares): static
   {
     foreach ($middlewares as $middleware) {
@@ -25,23 +20,41 @@ class MiddlewareHandler
     return $this;
   }
 
-  public function handle(MatchingRoute $route, ServerRequestInterface $request, callable $finalHandler): ResponseInterface
+  public function handle(
+    MatchingRoute     $route,
+    RequestInterface  $request,
+    ResponseInterface $response,
+    callable          $finalHandler
+  ): ResponseInterface
   {
     $this->index = 0;
-    return $this->next($route, $request, $finalHandler);
+    return $this->next($route, $request, $response, $finalHandler);
   }
 
-  private function next(MatchingRoute $route, ServerRequestInterface $request, callable $finalHandler): ResponseInterface
+  private function next(
+    MatchingRoute     $route,
+    RequestInterface  $request,
+    ResponseInterface $response,
+    callable          $finalHandler
+  ): ResponseInterface
   {
+    // If no more middlewares, call the final handler (dispatch)
     if ($this->index >= count($this->middlewares)) {
-      return $finalHandler($route, $request);
+      return $finalHandler($request, $response);
     }
+
     /** @var MiddlewareInterface $middleware */
     $middleware = $this->middlewares[$this->index];
     $this->index++;
 
-    return $middleware->fire($route, $request, function ($route, $request) use ($finalHandler) {
-      return $this->next($route, $request, $finalHandler);
-    });
+    // Pass response to middleware and continue the chain
+    return $middleware->fire(
+      $route,
+      $request,
+      function ($request, $response) use ($finalHandler, $route) {
+        return $this->next($route, $request, $response, $finalHandler);
+      },
+      $response
+    );
   }
 }

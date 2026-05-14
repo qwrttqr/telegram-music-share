@@ -2,7 +2,6 @@
 
 namespace QwrttqrHTTP\Http;
 
-use MongoDB\BSON\PackedArray;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
