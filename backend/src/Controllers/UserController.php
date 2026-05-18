@@ -21,8 +21,7 @@ class UserController extends ControllerWrapper
   #[Route('/users/{id}/posts/{postId}', 'GET')]
   public function getPost(int $id, int $postId): void
   {
-    // $id and $postId come from route params
-    // $uri is injected as a dependency
+    echo $_ENV['JWT_SECRET'];
     echo "User: $id, Post: $postId";
   }
 }

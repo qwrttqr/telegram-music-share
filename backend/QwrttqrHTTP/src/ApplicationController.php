@@ -15,10 +15,9 @@ use QwrttqrHTTP\Interfaces\RouteExpeditorInterface;
 use QwrttqrHTTP\Middlewares\MiddlewareHandler;
 use ReflectionException;
 use RuntimeException;
-
+use Dotenv;
 class ApplicationController
 {
-  //private Router $router;
   private array $controllers = [];
   private array $middlewares = [];
   private array $routingMap = [];
@@ -59,6 +58,9 @@ class ApplicationController
   }
   public function run(): void
   {
+    $dotenv = Dotenv\Dotenv::createImmutable(PROJECT_ROOT);
+    $dotenv->safeLoad();
+
     $request = $this->httpBroker->createPsr7Request();
     $response = $this->httpBroker->createPsr7Response();
 
