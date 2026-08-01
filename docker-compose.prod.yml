@@ -1,0 +1,19 @@
+:services:
+  nginx:
+    volumes:
+      - frontend_dist:/var/www/frontend
+  backend:
+    build:
+      target: PRODUCTION
+
+  frontend:
+    build:
+      target: BUILD
+    volumes:
+      - frontend_dist:/app/dist
+  bot:
+    build:
+      target: PRODUCTION
+
+volumes:
+  frontend_dist

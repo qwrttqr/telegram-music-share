@@ -7,14 +7,14 @@ services:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - backend
+      - frontend
     networks:
       - app-network
+    profiles: ["production"]
 
   backend:
     build: ./backend
     container_name: telegram-music-api
-    volumes:
-      - ./backend:/app
     depends_on:
       - postgres
     networks:
@@ -44,10 +44,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
-    ports:
-      - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql

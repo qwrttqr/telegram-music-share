@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      target: DEVELOPMENT
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      target: DEVELOPMENT
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+
+  bot:
+    build:
+      target: DEVELOPMENT
+    volumes:
+      - ./bot:/app
+
+  postgres:
+    ports:
+      - "5432:5432" 
