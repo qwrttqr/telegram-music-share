@@ -1,4 +1,4 @@
-:services:
+services:
   nginx:
     volumes:
       - frontend_dist:/var/www/frontend
