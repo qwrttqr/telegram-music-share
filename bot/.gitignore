@@ -1,0 +1,35 @@
+# Environment variables and secrets (CRITICAL for aiogram)
+.env
+.env.*
+config.ini
+secrets.py
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# aiogram / Bot persistent storage (if using local files)
+*.db
+*.sqlite
+*.sqlite3
+locales/
+logs/
+*.log
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

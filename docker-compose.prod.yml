@@ -4,16 +4,16 @@ services:
       - frontend_dist:/var/www/frontend
   backend:
     build:
-      target: PRODUCTION
+      target: prod
 
   frontend:
     build:
-      target: BUILD
+      target: build
     volumes:
       - frontend_dist:/app/dist
   bot:
     build:
-      target: PRODUCTION
+      target: prod
 
 volumes:
   frontend_dist

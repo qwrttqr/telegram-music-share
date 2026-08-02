@@ -1,5 +1,12 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS base
+WORKDIR /backend
+COPY ./requirements.txt /backend/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
 
-WORKDIR /app
+FROM base AS dev
+COPY ./app /backend/app
+CMD ["fastapi", "dev", "app/main.py", "--port", "80", "--host", "0.0.0.0"]
 
-CMD ["sleep", "infinity"]
+FROM base AS prod
+COPY ./app /backend/app
+CMD ["fastapi", "run", "app/main.py", "--port", "80", "--host", "0.0.0.0"]

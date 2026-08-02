@@ -1,13 +1,15 @@
 services:
   backend:
     build:
-      target: DEVELOPMENT
+      target: dev
     volumes:
       - ./backend:/app
+    ports:
+      - "80:80"
 
   frontend:
     build:
-      target: DEVELOPMENT
+      target: dev
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -16,7 +18,7 @@ services:
 
   bot:
     build:
-      target: DEVELOPMENT
+      target: dev
     volumes:
       - ./bot:/app
 
