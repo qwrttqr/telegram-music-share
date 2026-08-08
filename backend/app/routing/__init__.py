@@ -1,0 +1,1 @@
+from .routes.common import router as common_router
