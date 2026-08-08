@@ -2,6 +2,7 @@ services:
   nginx:
     volumes:
       - frontend_dist:/var/www/frontend
+      - ./docker/nginx/default.prod.template:/etc/nginx/templates/default.conf.template:ro
   backend:
     build:
       target: prod
@@ -16,4 +17,4 @@ services:
       target: prod
 
 volumes:
-  frontend_dist
+  frontend_dist:

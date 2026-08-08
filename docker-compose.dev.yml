@@ -1,12 +1,16 @@
 services:
+  nginx:
+    volumes:
+      - ./docker/nginx/default.dev.template:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      APP_HOST: ${APP_HOST:-localhost}
   backend:
     build:
       target: dev
     volumes:
-      - ./backend:/app
-    ports:
-      - "80:80"
-
+      - ./backend:/backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   frontend:
     build:
       target: dev
@@ -15,7 +19,8 @@ services:
       - /app/node_modules
     ports:
       - "5173:5173"
-
+    environment:
+      - VITE_APP_URL=${APP_ORIGIN:-http://localhost:5173}
   bot:
     build:
       target: dev
