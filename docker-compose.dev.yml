@@ -4,6 +4,7 @@ services:
       - ./docker/nginx/default.dev.template:/etc/nginx/templates/default.conf.template:ro
     environment:
       APP_HOST: ${APP_HOST:-localhost}
+
   backend:
     build:
       target: dev
@@ -11,6 +12,7 @@ services:
       - ./backend:/backend
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
   frontend:
     build:
       target: dev
@@ -21,6 +23,7 @@ services:
       - "5173:5173"
     environment:
       - VITE_APP_URL=${APP_ORIGIN:-http://localhost:5173}
+
   bot:
     build:
       target: dev

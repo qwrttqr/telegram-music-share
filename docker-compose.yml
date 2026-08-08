@@ -18,6 +18,8 @@ services:
       - postgres
     networks:
       - app-network
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
 
   frontend:
     build: ./frontend
@@ -34,6 +36,8 @@ services:
       - backend
     networks:
       - app-network
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
 
   postgres:
     image: postgres:17
