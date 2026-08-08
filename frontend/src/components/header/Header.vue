@@ -1,7 +1,7 @@
 <template>
   <header class="header">
     <div class="header__left">
-      <img src="../../../public/images/mike.jpg">
+      <ProfileHeader />
     </div>
 
     <div class="header__right">
@@ -21,7 +21,7 @@
       <Transition name="menu">
         <nav v-if="isMenuOpen" class="menu">
           <button
-            v-for="item in menuItems"
+            v-for="item in availableMenuItems"
             :key="item.routeName"
             class="menu__item"
             :class="{ 'menu__item--active': route.name === item.routeName }"
@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import ProfileHeader from "@/components/profile/ProfileHeader.vue";
 
 const router = useRouter()
 const route = useRoute()
@@ -72,6 +73,10 @@ const menuItems: MenuItem[] = [
   { label: 'Posts', routeName: 'posts' },
   { label: 'Friends', routeName: 'friends' },
 ]
+
+const availableMenuItems = computed(() => {
+  return menuItems.filter(el => el.routeName != route.name)
+})
 </script>
 
 <style scoped lang="scss">
@@ -79,10 +84,9 @@ const menuItems: MenuItem[] = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  height: 52px;
+  padding: 5px 10px;
   box-sizing: border-box;
-  background: rgb(120 117 117 / 0.27);
+  background: var(--tg-theme-secondary-bg-color);
   border-radius: 5px;
   color: var(--tg-theme-text-color, #000);
   position: relative;
@@ -98,6 +102,7 @@ const menuItems: MenuItem[] = [
 
   &__right {
     display: flex;
+    margin-right: 10px;
     align-items: center;
     position: relative;
   }

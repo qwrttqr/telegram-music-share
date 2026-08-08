@@ -1,42 +1,3 @@
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useTelegramStore } from '@/stores/telegram'
-import http from '@/plugins/http'
-import {useRouter} from "vue-router";
-import {useUserStore} from "@/stores/user.ts";
-
-const router = useRouter()
-
-const telegramStore = useTelegramStore()
-const userStore = useUserStore()
-
-const isLoading = ref(false)
-const error = ref<string | null>(null)
-
-async function proceed() {
-  if (!telegramStore.user?.id) {
-    error.value = 'No Telegram user data available'
-    return
-  }
-
-  isLoading.value = true
-  error.value = null
-
-  try {
-    await http.post('/add_user', {
-      telegram_id: telegramStore.user.id,
-      tg_username: telegramStore.user.username ?? null,
-    })
-    userStore.isAuthenticated = true
-    router.push({name: 'profile'})
-  } catch {
-    error.value = 'Some error happened on backend side, please ping @qwrttqr.'
-  } finally {
-    isLoading.value = false
-  }
-}
-</script>
-
 <template>
   <div class="block">
     <div class="block__card">
@@ -58,6 +19,62 @@ async function proceed() {
   </div>
 </template>
 
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useTelegramStore } from '@/stores/telegram'
+import { tg } from '@/services/telegram'
+import http from '@/plugins/http'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user.ts'
+
+const router = useRouter()
+const telegramStore = useTelegramStore()
+const userStore = useUserStore()
+
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+const pendingInviteToken = ref<string | null>(null)
+
+onMounted(() => {
+  const startParam = tg.initDataUnsafe?.start_param
+  console.log('start_param:', startParam)
+  if (startParam) {
+    pendingInviteToken.value = startParam
+  }
+})
+
+async function proceed() {
+  if (!telegramStore.user?.id) {
+    error.value = 'No Telegram user data available'
+    return
+  }
+
+  isLoading.value = true
+  error.value = null
+
+  try {
+    await http.post('/users/add_user')
+    userStore.isAuthenticated = true
+
+    if (pendingInviteToken.value) {
+      console.log(123)
+      router.push({
+        name: 'friends-accept-invite',
+        params: { token: pendingInviteToken.value },
+      })
+    } else {
+      router.push({ name: 'profile' })
+    }
+  } catch (e) {
+    console.error(e)
+    error.value = 'Some error happened on backend side, please ping @qwrttqr.'
+  } finally {
+    isLoading.value = false
+  }
+}
+</script>
+
+
 <style lang="scss" scoped>
 .block {
   width: 100%;
@@ -74,7 +91,7 @@ async function proceed() {
     padding: 32px 24px;
     border-radius: 20px;
     text-align: center;
-    background: rgb(120 117 117 / 0.27);
+    background: var(--tg-theme-secondary-bg-color);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
 
@@ -96,7 +113,7 @@ async function proceed() {
     padding: 12px;
     border: none;
     border-radius: 12px;
-    background: #4a9eff;
+    background: var(--tg-theme-button-color);
     color: white;
     font-size: 15px;
     font-weight: 600;
