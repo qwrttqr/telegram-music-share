@@ -17,5 +17,9 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ['.ngrok-free.dev'],
+    watch: {
+      usePolling: true,
+      interval: 1000
+    }
   }
 })
