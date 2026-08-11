@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     ForeignKey,
     String,
-    func
+    func, DateTime
 )
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,7 +41,7 @@ class Post(Base):
     comment: Mapped[str] = mapped_column(String(500), nullable=False)
     content: Mapped[str] = mapped_column(String(600), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        server_default=func.current_timestamp(), nullable=False
+        DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False
     )
 
     author_user: Mapped["User"] = relationship(back_populates="posts")

@@ -1,10 +1,7 @@
-import json
-import os
-
 from fastapi import Header, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.engine import get_db_session
+from db.core.engine import get_db_session
 from db.models import User
 from utils.validation import validate_init_data
 from dotenv import load_dotenv

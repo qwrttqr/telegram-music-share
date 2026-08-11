@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .Base import Base
 
@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 
 class Friendship(Base):
     __tablename__ = "friendships"
-
+    __table_args__ = (
+        CheckConstraint("user_2_id > user_1_id", name="no_duplicates_friendships"),
+    )
     user_1_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )

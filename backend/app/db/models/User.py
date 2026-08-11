@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import BigInteger, String
 
-from db.models.FriendsToken import FriendsToken
+from .FriendsToken import FriendsToken
 from .Base import Base
 
 if TYPE_CHECKING:
@@ -15,9 +15,11 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
     tg_username: Mapped[str | None] = mapped_column(String(255), nullable=True)
-
+    first_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(String, nullable=True)
     posts: Mapped[list["Post"]] = relationship(back_populates="author_user")
     seen_posts: Mapped[list["PostSeen"]] = relationship(back_populates="seen_by")
     friend_tokens: Mapped["FriendsToken"] = relationship(back_populates="token_creator")

@@ -31,3 +31,5 @@ archive.zip
 .DS_Store
 
 .codspeed
+
+/logs
