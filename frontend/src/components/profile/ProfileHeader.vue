@@ -2,8 +2,8 @@
   <header class="profile-header">
     <div class="profile-container">
       <img
-        v-if="telegramStore.user?.photo_url"
-        :src="telegramStore.user.photo_url"
+        v-if="photoUrl"
+        :src="photoUrl"
         :alt="displayName"
         class="profile-header__avatar"
       />
@@ -12,8 +12,8 @@
       </div>
       <div class="profile-header__info">
         <span class="profile-header__name">{{ displayName }}</span>
-        <span v-if="telegramStore.user?.username" class="profile-header__username">
-          @{{ telegramStore.user.username }}
+        <span v-if="username" class="profile-header__username">
+          @{{ username }}
         </span>
       </div>
     </div>
@@ -21,16 +21,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTelegramStore } from '@/stores/telegram'
-
-const telegramStore = useTelegramStore()
-
-const displayName = computed(() => {
-  const user = telegramStore.user
-  if (!user) return ''
-  return [user.first_name, user.last_name].filter(Boolean).join(' ')
-})
+defineProps<{
+  photoUrl?: string | null
+  displayName: string
+  username?: string | null
+}>()
 </script>
 
 <style scoped lang="scss">

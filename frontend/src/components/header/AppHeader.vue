@@ -1,7 +1,11 @@
 <template>
   <header class="header">
     <div class="header__left">
-      <ProfileHeader />
+      <ProfileHeader
+        :photo-url="telegramStore.user?.photo_url"
+        :display-name="[telegramStore.user?.first_name, telegramStore.user?.last_name].filter(Boolean).join(' ')"
+        :username="telegramStore.user?.username"
+      />
     </div>
 
     <div class="header__right">
@@ -41,10 +45,12 @@
 import {computed, ref} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ProfileHeader from "@/components/profile/ProfileHeader.vue";
+import {useTelegramStore} from "@/stores/telegram.ts";
 
 const router = useRouter()
 const route = useRoute()
 
+const telegramStore = useTelegramStore()
 const isMenuOpen = ref(false)
 
 function toggleMenu() {

@@ -28,7 +28,16 @@
     </section>
 
     <section class="friends-list">
-      <p class="friends-list__placeholder">Your friends will show up here</p>
+      <p v-if="!friendsLoading && !friends.length" class="friends-list__placeholder">
+        Your friends will show up here
+      </p>
+      <ProfileHeader
+        v-for="friend in friends"
+        :key="friend.telegram_id"
+        :photo-url="friend.photo_url"
+        :display-name="friendDisplayName(friend)"
+        :username="friend.tg_username"
+      />
     </section>
 
     <Transition name="modal">
@@ -37,7 +46,13 @@
           <template v-if="acceptSuccess">
             <h3 class="modal__title">You're now friends!</h3>
           </template>
-          <template v-else-if="!acceptSuccess && acceptLoading">
+          <template v-else-if="acceptError">
+            <h3 class="modal__title">The invite link is incorrect or already been used(</h3>
+            <button class="modal__decline" @click="closeModal">
+              Ok
+            </button>
+          </template>
+          <template v-else>
             <h3 class="modal__title">Accept friend request?</h3>
             <p class="modal__subtitle">You've been invited to connect.</p>
 
@@ -50,12 +65,6 @@
               </button>
             </div>
           </template>
-          <template v-else>
-              <h3 class="modal__title">The invite link is incorrect or already been used(</h3>
-              <button class="modal__decline" @click="closeModal">
-                Ok
-              </button>
-          </template>
         </div>
       </div>
     </Transition>
@@ -67,6 +76,7 @@ import {ref, computed, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import http from '@/plugins/http'
 import axios from "axios";
+import ProfileHeader from "@/components/profile/ProfileHeader.vue";
 
 const route = useRoute()
 const router = useRouter()
@@ -77,10 +87,24 @@ const tokenError = ref(false)
 const inviteToken = ref<string | null>(null)
 const copied = ref(false)
 
+// -- friends list --
+interface Friend {
+  telegram_id: number
+  tg_username: string | null
+  first_name: string | null
+  last_name: string | null
+  photo_url: string | null
+}
+
+const friends = ref<Friend[]>([])
+const friendsLoading = ref(false)
+
+
 const inviteLink = computed(() => {
   if (!inviteToken.value) return ''
   return `https://t.me/music_share_qwrttqr_bot/qwrttqr_music_share?startapp=${inviteToken.value}`
 })
+
 async function generateInvite() {
   tokenLoading.value = true
   tokenError.value = false
@@ -94,6 +118,23 @@ async function generateInvite() {
     tokenError.value = true
   } finally {
     tokenLoading.value = false
+  }
+}
+
+function friendDisplayName(friend: Friend): string {
+  const name = [friend.first_name, friend.last_name].filter(Boolean).join(' ')
+  return name || friend.tg_username || 'Unknown'
+}
+
+
+async function loadFriends() {
+  friendsLoading.value = true
+  try {
+    const { data } = await http.get<{ friends: Friend[] }>('/friends/get_friends')
+    friends.value = data.friends
+  } catch {
+  } finally {
+    friendsLoading.value = false
   }
 }
 
@@ -119,6 +160,7 @@ onMounted(() => {
   if (typeof tokenParam === 'string' && tokenParam.length > 0) {
     showAcceptModal.value = true
   }
+  loadFriends()
 })
 
 function closeModal() {
@@ -140,9 +182,9 @@ async function acceptInvite() {
   acceptError.value = null
 
   try {
-    const { data } = await http.post<{ success: boolean; message: string }>(
+    const {data} = await http.post<{ success: boolean; message: string }>(
       '/friends/accept_invite',
-      { token: tokenParam },
+      {token: tokenParam},
     )
 
     if (data.success) {
