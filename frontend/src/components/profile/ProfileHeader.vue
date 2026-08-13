@@ -1,6 +1,6 @@
 <template>
   <header class="profile-header">
-    <div class="profile-container">
+    <div class="profile-container" :style="{ justifyContent: contentJustify }">
       <img
         v-if="photoUrl"
         :src="photoUrl"
@@ -17,14 +17,24 @@
         </span>
       </div>
     </div>
+    <div>
+      <slot name="action">
+      </slot>
+    </div>
   </header>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const {
+  photoUrl = null,
+  displayName,
+  username = null,
+  contentJustify = 'center'
+} = defineProps<{
   photoUrl?: string | null
   displayName: string
   username?: string | null
+  contentJustify?: string
 }>()
 </script>
 
@@ -32,8 +42,8 @@ defineProps<{
 .profile-header {
   display: flex;
   padding: 16px;
-  justify-content: space-around;
-
+  align-items: center;
+  justify-content: space-between;
   &__avatar {
     width: 60px;
     height: 60px;
@@ -71,5 +81,6 @@ defineProps<{
   display: flex;
   align-items: center;
   gap: 20px;
+  width: 100%;
 }
 </style>

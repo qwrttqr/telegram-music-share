@@ -28,16 +28,46 @@
     </section>
 
     <section class="friends-list">
-      <p v-if="!friendsLoading && !friends.length" class="friends-list__placeholder">
-        Your friends will show up here
-      </p>
-      <ProfileHeader
-        v-for="friend in friends"
-        :key="friend.telegram_id"
-        :photo-url="friend.photo_url"
-        :display-name="friendDisplayName(friend)"
-        :username="friend.tg_username"
-      />
+      <div class="friends-list__header">
+        <div class="friends-list__title">Update friends list</div>
+        <button
+          class="friends-list__reload"
+          type="button"
+          aria-label="Reload friends"
+          :disabled="friendsLoading"
+          @click="loadFriends"
+        >
+          <span class="material-icons">refresh</span>
+        </button>
+      </div>
+
+      <div class="friends-list__scroll">
+        <div v-if="friendsLoading && !friends.length" class="friends-list__loader">
+          <CommonSpinner/>
+        </div>
+
+        <p v-else-if="!friends.length" class="friends-list__placeholder">
+          Your friends will show up here
+        </p>
+
+        <div v-for="friend in friends" :key="friend.telegram_id" class="friends-list__card">
+
+          {{friend}}
+          <ProfileHeader
+            :contentJustify="'start'"
+            :photo-url="friend.photo_url"
+            :display-name="friendDisplayName(friend)"
+            :username="friend.tg_username"
+          >
+
+            <template #action>
+              <button @click="deleteFriend(friend.id)" class="friends-list__delete_friend">
+                <span class="material-icons friends-list__delete_button">delete</span>
+              </button>
+            </template>
+          </ProfileHeader>
+        </div>
+      </div>
     </section>
 
     <Transition name="modal">
@@ -75,8 +105,9 @@
 import {ref, computed, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import http from '@/plugins/http'
-import axios from "axios";
-import ProfileHeader from "@/components/profile/ProfileHeader.vue";
+import axios from "axios"
+import ProfileHeader from "@/components/profile/ProfileHeader.vue"
+import CommonSpinner from "@/components/common/CommonSpinner.vue"
 
 const route = useRoute()
 const router = useRouter()
@@ -89,6 +120,7 @@ const copied = ref(false)
 
 // -- friends list --
 interface Friend {
+  id: number
   telegram_id: number
   tg_username: string | null
   first_name: string | null
@@ -130,7 +162,7 @@ function friendDisplayName(friend: Friend): string {
 async function loadFriends() {
   friendsLoading.value = true
   try {
-    const { data } = await http.get<{ friends: Friend[] }>('/friends/get_friends')
+    const {data} = await http.get<{ friends: Friend[] }>('/friends/get_friends')
     friends.value = data.friends
   } catch {
   } finally {
@@ -174,6 +206,16 @@ function clearLink() {
   copied.value = false
 }
 
+async function deleteFriend(friendId: Number) {
+  const {data} = await http.post<{ success: boolean; message: string }>(
+    '/friends/delete_friend',
+    {friend_id: friendId})
+  if (data.success) {
+    friends.value = friends.value.filter((item: Friend) => item.id != friendId)
+  } else {
+  }
+}
+
 async function acceptInvite() {
   const tokenParam = route.params.token
   if (typeof tokenParam !== 'string') return
@@ -190,6 +232,7 @@ async function acceptInvite() {
     if (data.success) {
       acceptSuccess.value = true
       setTimeout(closeModal, 1200)
+      setTimeout(loadFriends, 1300)
     } else {
       acceptError.value = data.message || 'Could not accept invite'
     }
@@ -309,10 +352,89 @@ async function acceptInvite() {
 .friends-list {
   padding: 0 16px;
 
+  &__header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--tg-theme-hint-color, #999);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  &__reload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tg-theme-hint-color, #999);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: rgba(120, 120, 120, 0.25);
+    }
+
+    &:active {
+      background: rgba(120, 120, 120, 0.4);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__delete_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+  }
+
+  &__delete_button:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &__delete_friend {
+    background: none;
+    border: none;
+  }
+
+  &__card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
   &__placeholder {
     text-align: center;
     color: var(--tg-theme-hint-color, #999);
     padding: 24px 0;
+  }
+
+  &__scroll {
+    max-height: 355px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
   }
 }
 
