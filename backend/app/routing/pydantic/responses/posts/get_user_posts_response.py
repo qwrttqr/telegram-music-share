@@ -1,14 +1,16 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
+from db.models.Post import TrackVendor
+
 
 class UserPostEntity(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    content_type: str
+    vendor: TrackVendor
     title: str
     comment: str
-    content: str
+    link: str
     created_at: datetime
 
 class ResponseUserPosts(BaseModel):
