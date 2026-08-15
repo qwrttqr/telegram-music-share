@@ -26,6 +26,17 @@ const router = createRouter({
           component: () => import("@/pages/profile/ProfilePage.vue")
         },
         {
+          path: 'posts',
+          name: 'posts',
+          beforeEnter: (to) => {
+            const userStore = useUserStore()
+            if (!userStore.isAuthenticated) {
+              return { name: 'hello', query: { redirect: to.fullPath } }
+            }
+          },
+          component: () => import("@/pages/post/PostsPage.vue")
+        },
+        {
           path: 'friends',
           name: 'friends',
           beforeEnter: (to) => {

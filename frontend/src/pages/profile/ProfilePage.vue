@@ -1,69 +1,73 @@
 <template>
   <div class="profile-page">
-
+    <div class="profile-page__header">
+      <h3>
+        Your posts
+      </h3>
+      <CommonButton class="profile-page__header__reload" variant="circle" type="button"
+                    @click="retry">
+        <span class="material-icons">refresh</span>
+      </CommonButton>
+    </div>
     <section class="profile-posts">
-<!--      <article v-for="post in posts" :key="post.id" class="post-card">-->
-<!--        <h3 class="post-card__title">{{ post.title }}</h3>-->
-<!--        <p v-if="post.comment" class="post-card__comment">{{ post.comment }}</p>-->
-<!--        <p class="post-card__content">{{ post.content }}</p>-->
-<!--        <time class="post-card__date">{{ formatDate(post.created_at) }}</time>-->
-<!--      </article>-->
+      <PostCard
+        v-for="post in myPosts"
+        :key="post.id"
+        :post="post"
+      />
 
-      <p v-if="!loading && posts.length === 0" class="profile-posts__empty">
+      <p v-if="!loading && !myPosts.length && !error" class="profile-posts__empty">
         No posts yet
       </p>
 
       <div v-if="error" class="profile-posts__error">
         Failed to load posts, ping @qwrttqr
-        <button @click="retry">Retry</button>
+        <CommonButton variant="secondary" @click="retry">Retry</CommonButton>
       </div>
 
-      <div ref="sentinel" class="profile-posts__sentinel" />
+      <div ref="sentinel" class="profile-posts__sentinel"/>
 
-      <div v-if="loading" class="profile-posts__loading">Loading...</div>
+      <div v-if="loading" class="profile-posts__loading">
+        <CommonSpinner/>
+      </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import {ref, computed, onMounted, onUnmounted} from 'vue'
 import http from '@/plugins/http'
-
-interface UserPostEntity {
-  id: number
-  content_type: string
-  title: string
-  comment: string
-  content: string
-  created_at: string
-}
+import PostCard from '@/components/posts/PostCard.vue'
+import CommonSpinner from '@/components/common/CommonSpinner.vue'
+import CommonButton from '@/components/common/CommonButton.vue'
+import type {MyPost} from '@/types/post.ts'
 
 interface ResponseUserPosts {
-  posts: UserPostEntity[]
+  posts: MyPost[]
   total: number
 }
 
 const PER_PAGE = 20
 
-const posts = ref<UserPostEntity[]>([])
+const myPosts = ref<MyPost[]>([])
 const page = ref(0)
 const total = ref(0)
 const loading = ref(false)
 const error = ref(false)
 
-const hasMore = computed(() => posts.value.length < total.value)
+const hasMore = computed(() => myPosts.value.length < total.value || page.value === 1)
 
 async function loadMore() {
-  if (loading.value || !hasMore.value) return
+  if (loading.value || (!hasMore.value && page.value > 1)) return
 
   loading.value = true
   error.value = false
 
   try {
-    const { data } = await http.get<ResponseUserPosts>('/posts/get_user_posts', {
-      params: { page: page.value, per_page: PER_PAGE },
+    const {data} = await http.get<ResponseUserPosts>('/posts/get_my_posts', {
+      params: {page: page.value, per_page: PER_PAGE},
     })
-    posts.value.push(...data.posts)
+    myPosts.value.push(...data.posts)
     total.value = data.total
     page.value += 1
   } catch {
@@ -77,14 +81,6 @@ function retry() {
   loadMore()
 }
 
-// function formatDate(isoString: string) {
-//   return new Date(isoString).toLocaleDateString(undefined, {
-//     day: 'numeric',
-//     month: 'short',
-//     year: 'numeric',
-//   })
-// }
-
 const sentinel = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
@@ -95,7 +91,7 @@ onMounted(() => {
         loadMore()
       }
     },
-    { rootMargin: '200px' },
+    {rootMargin: '200px'},
   )
   if (sentinel.value) observer.observe(sentinel.value)
 
@@ -112,5 +108,59 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 16px;
+
+  &__header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: var(--tg-theme-text-color, #fff);
+
+    &__reload {
+      border: none;
+      width: 30px;
+      height: 30px;
+      background: transparent;
+    }
+
+    &__reload:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.profile-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__empty {
+    text-align: center;
+    color: var(--tg-theme-hint-color, #999);
+    padding: 24px 0;
+    font-size: 14px;
+  }
+
+  &__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 0;
+    color: #ff6b6b;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+  }
+
+  &__sentinel {
+    height: 1px;
+  }
 }
 </style>

@@ -1,21 +1,22 @@
 <template>
   <div class="friends-page">
     <section class="friends-invite">
-      <button class="friends-invite__button" :disabled="tokenLoading" @click="generateInvite">
+      <CommonButton :type="'button'" :variant="'primary'" class="friends-invite__button" :disabled="tokenLoading" @click="generateInvite">
         {{ tokenLoading ? 'Generating...' : 'Invite a friend' }}
-      </button>
+      </CommonButton>
 
       <div v-if="inviteLink" class="friends-invite__result">
         <div class="friends-invite__input-wrap">
           <input class="friends-invite__link" :value="inviteLink" readonly @click="selectLinkText"/>
-          <button
+          <CommonButton
             class="friends-invite__clear"
             type="button"
+            variant="secondary"
             aria-label="Clear invite link"
             @click="clearLink"
           >
             <img src="/images/cross.svg" alt="">
-          </button>
+          </CommonButton>
         </div>
         <button class="friends-invite__copy" @click="copyLink">
           {{ copied ? 'Copied!' : 'Copy' }}
@@ -30,15 +31,16 @@
     <section class="friends-list">
       <div class="friends-list__header">
         <div class="friends-list__title">Update friends list</div>
-        <button
+        <CommonButton
           class="friends-list__reload"
           type="button"
+          variant="circle"
           aria-label="Reload friends"
           :disabled="friendsLoading"
           @click="loadFriends"
         >
           <span class="material-icons">refresh</span>
-        </button>
+        </CommonButton>
       </div>
 
       <div class="friends-list__scroll">
@@ -78,21 +80,21 @@
           </template>
           <template v-else-if="acceptError">
             <h3 class="modal__title">The invite link is incorrect or already been used(</h3>
-            <button class="modal__decline" @click="closeModal">
+            <CommonButton variant="secondary" @click="closeModal">
               Ok
-            </button>
+            </CommonButton>
           </template>
           <template v-else>
             <h3 class="modal__title">Accept friend request?</h3>
             <p class="modal__subtitle">You've been invited to connect.</p>
 
             <div class="modal__actions">
-              <button class="modal__decline" :disabled="acceptLoading" @click="closeModal">
+              <CommonButton variant="secondary" :disabled="acceptLoading" @click="closeModal">
                 Decline
-              </button>
-              <button class="modal__accept" :disabled="acceptLoading" @click="acceptInvite">
-                {{ acceptLoading ? 'Accepting...' : 'Accept' }}
-              </button>
+              </CommonButton>
+              <CommonButton variant="primary" :loading="acceptLoading" @click="acceptInvite">
+                Accept
+              </CommonButton>
             </div>
           </template>
         </div>
@@ -108,6 +110,7 @@ import http from '@/plugins/http'
 import axios from "axios"
 import ProfileHeader from "@/components/profile/ProfileHeader.vue"
 import CommonSpinner from "@/components/common/CommonSpinner.vue"
+import CommonButton from "@/components/common/CommonButton.vue";
 
 const route = useRoute()
 const router = useRouter()
@@ -284,16 +287,11 @@ async function acceptInvite() {
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     width: 22px;
     height: 22px;
     border: none;
-    border-radius: 50%;
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
+    border-radius: 50% !important;
+    background: transparent !important;
     transition: background-color 0.15s ease;
 
     img {
@@ -303,7 +301,7 @@ async function acceptInvite() {
     }
 
     &:hover {
-      background: rgba(120, 120, 120, 0.25);
+      background: rgba(120, 120, 120, 0.25) !important;
     }
 
     &:active {
@@ -312,20 +310,7 @@ async function acceptInvite() {
   }
 
   &__button {
-    padding: 12px;
     margin-top: 20px;
-    border: none;
-    border-radius: 12px;
-    background: var(--tg-theme-button-color, #4a9eff);
-    color: var(--tg-theme-button-text-color, #fff);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
   }
 
   &__result {
@@ -366,17 +351,12 @@ async function acceptInvite() {
   }
 
   &__reload {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 32px !important;
+    height: 32px !important;
     border: none;
-    border-radius: 50%;
     background: transparent;
     color: var(--tg-theme-hint-color, #999);
-    cursor: pointer;
-    transition: background-color 0.15s ease;
+    border-radius: 50%;
 
     &:hover {
       background: rgba(120, 120, 120, 0.25);
@@ -472,32 +452,6 @@ async function acceptInvite() {
   &__actions {
     display: flex;
     gap: 10px;
-  }
-
-  &__accept,
-  &__decline {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-
-  &__accept {
-    background: var(--tg-theme-button-color, #4a9eff);
-    color: var(--tg-theme-button-text-color, #fff);
-  }
-
-  &__decline {
-    background: var(--tg-theme-secondary-bg-color, #333);
-    color: var(--tg-theme-text-color, #fff);
   }
 
   &__error {
