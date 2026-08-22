@@ -1,26 +1,24 @@
 <template>
   <article class="post-card">
     <ProfileHeader
-      v-if="isPost(post)"
+      v-if="isForeign(post)"
       :content-justify="'start'"
       :photo-url="post.author.photo_url"
       :display-name="displayName"
       :username="post.author.tg_username"
     />
 
-    <div class="post-card__content" :class="{ 'post-card__content--no-header': !isPost(post) }">
-      <h3 class="post-card__title">{{ post.title }}</h3>
-      <p class="post-card__comment">{{ post.comment }}</p>
+    <div class="post-card__content" :class="{ 'post-card__content--no-header': !isForeign(post) }">
+      <div class="post-card__title-block">
+        <div>
+          <h3 class="post-card__title">{{ post.title }}</h3>
+          <p class="post-card__comment">{{ post.comment }}</p>
+        </div>
+        <DeleteButton />
+      </div>
 
       <div v-if="embedUrl" class="post-card__media">
-        <iframe
-          :src="embedUrl"
-          width="100%"
-          height="352"
-          allowfullscreen
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-        />
+        <div v-if="embedUrl" ref="embedEl" class="post-card__media"></div>
       </div>
 
       <a v-else :href="post.link" target="_blank" rel="noopener" class="post-card__link">
@@ -35,16 +33,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import ProfileHeader from '@/components/profile/ProfileHeader.vue'
-import { toSpotifyEmbedUrl } from '@/plugins/useSpotify'
-import type { Post, MyPost } from '@/types/post.ts'
+import {toSpotifyEmbedUrl} from '@/plugins/useSpotify'
+import type {Post, MyPost} from '@/types/post.ts'
+import {
+  loadSpotifyIframeAPI,
+} from "@/services/spotifyController.ts";
+import {useSpotifyControllerStore} from "@/stores/spotifyController.ts";
+import DeleteButton from "@/components/common/deleteButton.vue";
 
 const props = defineProps<{
   post: Post | MyPost
 }>()
 
-function isPost(post: Post | MyPost): post is Post {
+const embedEl = ref<HTMLElement | null>(null)
+const spotifyControllerStore = useSpotifyControllerStore()
+
+function isForeign(post: Post | MyPost): post is Post {
   return 'author' in post
 }
 
@@ -54,12 +60,32 @@ const embedUrl = computed(() => {
 })
 
 const displayName = computed(() => {
-  if (!isPost(props.post)) return ''
+  if (!isForeign(props.post)) return ''
   const name = [props.post.author.first_name, props.post.author.last_name].filter(Boolean).join(' ')
   return name || props.post.author.tg_username || 'Unknown'
 })
 
+function toSpotifyUri(link: string): string {
+  const match = link.match(/track\/([a-zA-Z0-9]+)/)!
+  return `spotify:track:${match[1]}`
+}
+
 const formattedDate = computed(() => new Date(props.post.created_at).toLocaleDateString())
+
+onMounted(async () => {
+  if (!embedEl.value) return
+  const api = await loadSpotifyIframeAPI()
+  api.createController(embedEl.value, {
+    uri: toSpotifyUri(props.post.link),
+    width: '100%',
+    height: 352
+  }, (controller) => {
+    spotifyControllerStore.register(String(props.post.id), controller)
+    controller.addListener('playback_update', (e) => {
+      if (!e.data.isPaused) spotifyControllerStore.pauseAllExcept(String(props.post.id))
+    })
+  })
+})
 </script>
 
 <style scoped lang="scss">
@@ -81,6 +107,11 @@ const formattedDate = computed(() => new Date(props.post.created_at).toLocaleDat
     color: var(--tg-theme-text-color, #fff);
     font-size: 16px;
     font-weight: 600;
+  }
+
+  &__title-block {
+    display: flex;
+    justify-content: space-between;
   }
 
   &__comment {

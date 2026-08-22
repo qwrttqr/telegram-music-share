@@ -7,25 +7,25 @@
       <p class="block__subtitle">
         Share your favorite tracks with friends
       </p>
-      <button
-        class="block__button"
+      <CommonButton
         :disabled="isLoading"
         @click="proceed"
       >
         {{ isLoading ? 'Loading...' : 'Continue' }}
-      </button>
+      </CommonButton>
       <p v-if="error" class="block__error">{{ error }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useTelegramStore } from '@/stores/telegram'
-import { tg } from '@/services/telegram'
+import {ref, onMounted} from 'vue'
+import {useTelegramStore} from '@/stores/telegram'
+import {tg} from '@/services/telegram'
 import http from '@/plugins/http'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user.ts'
+import {useRouter} from 'vue-router'
+import {useUserStore} from '@/stores/user.ts'
+import CommonButton from "@/components/common/CommonButton.vue";
 
 const router = useRouter()
 const telegramStore = useTelegramStore()
@@ -60,10 +60,10 @@ async function proceed() {
       console.log(123)
       router.push({
         name: 'friends-accept-invite',
-        params: { token: pendingInviteToken.value },
+        params: {token: pendingInviteToken.value},
       })
     } else {
-      router.push({ name: 'profile' })
+      router.push({name: 'profile'})
     }
   } catch (e) {
     console.error(e)
@@ -88,8 +88,11 @@ async function proceed() {
   &__card {
     width: 100%;
     max-width: 340px;
+    display: flex;
+    flex-direction: column;
     padding: 32px 24px;
     border-radius: 20px;
+    justify-content: space-around;
     text-align: center;
     background: var(--tg-theme-secondary-bg-color);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -108,27 +111,16 @@ async function proceed() {
     font-size: 14px;
   }
 
-  &__button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    background: var(--tg-theme-button-color);
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
-
   &__error {
     margin-top: 12px;
     color: #ff6b6b;
     font-size: 13px;
   }
 }
+
+
 </style>

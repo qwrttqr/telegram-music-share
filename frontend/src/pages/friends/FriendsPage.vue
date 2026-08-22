@@ -11,16 +11,16 @@
           <CommonButton
             class="friends-invite__clear"
             type="button"
-            variant="secondary"
+            variant="circle"
             aria-label="Clear invite link"
             @click="clearLink"
           >
             <img src="/images/cross.svg" alt="">
           </CommonButton>
         </div>
-        <button class="friends-invite__copy" @click="copyLink">
+        <CommonButton class="friends-invite__copy" variant="secondary" @click="copyLink">
           {{ copied ? 'Copied!' : 'Copy' }}
-        </button>
+        </CommonButton>
       </div>
 
       <p v-if="tokenError" class="friends-invite__error">
@@ -63,9 +63,7 @@
           >
 
             <template #action>
-              <button @click="deleteFriend(friend.id)" class="friends-list__delete_friend">
-                <span class="material-icons friends-list__delete_button">delete</span>
-              </button>
+              <DeleteButton @click="deleteFriend(friend.id)"/>
             </template>
           </ProfileHeader>
         </div>
@@ -111,6 +109,7 @@ import axios from "axios"
 import ProfileHeader from "@/components/profile/ProfileHeader.vue"
 import CommonSpinner from "@/components/common/CommonSpinner.vue"
 import CommonButton from "@/components/common/CommonButton.vue";
+import DeleteButton from "@/components/common/deleteButton.vue";
 
 const route = useRoute()
 const router = useRouter()
@@ -285,8 +284,6 @@ async function acceptInvite() {
   &__clear {
     position: absolute;
     right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
     width: 22px;
     height: 22px;
     border: none;
@@ -319,13 +316,9 @@ async function acceptInvite() {
   }
 
   &__copy {
-    padding: 0 16px;
-    border: none;
-    border-radius: 10px;
-    background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-    color: var(--tg-theme-text-color, #000);
-    font-size: 13px;
-    cursor: pointer;
+    flex: 0 0 auto !important;
+    width: auto;
+    padding: 10px 14px;
   }
 
   &__error {

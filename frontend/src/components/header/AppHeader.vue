@@ -76,7 +76,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { label: 'My Profile', routeName: 'profile' },
-  { label: 'Posts', routeName: 'posts' },
+  { label: 'Feed', routeName: 'feed' },
   { label: 'Friends', routeName: 'friends' },
 ]
 

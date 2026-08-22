@@ -1,4 +1,3 @@
-<!-- src/components/common/CommonButton.vue -->
 <template>
   <button
     class="common-button"

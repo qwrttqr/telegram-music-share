@@ -4,9 +4,6 @@
       <div class="modal">
         <div class="modal__header">
           <h3 class="modal__title">Create post</h3>
-          <button class="modal__close" type="button" aria-label="Close" @click="close">
-            <img src="/images/cross.svg" alt=""/>
-          </button>
         </div>
 
         <form class="modal__form" @submit.prevent="createPost">
@@ -30,14 +27,15 @@
               rows="3"
             />
 
-            <button
+            <CommonButton
               v-if="spotifyEmbedUrl"
               type="button"
+              variant="secondary"
               class="modal__preview-toggle"
               @click="showPreview = !showPreview"
             >
               {{ showPreview ? 'Hide preview' : 'Preview track' }}
-            </button>
+            </CommonButton>
 
             <div v-if="showPreview && spotifyEmbedUrl" class="modal__preview">
               <iframe
@@ -76,10 +74,10 @@
                 rows="4"
                 :disabled="loading"
               />
-              <button type="button" class="modal__emoji-toggle"
+              <CommonButton type="button" variant="circle" class="modal__emoji-toggle"
                       @click="showEmojiPicker = !showEmojiPicker">
                 😊
-              </button>
+              </CommonButton>
               <div v-if="showEmojiPicker" class="modal__emoji-popover">
                 <EmojiPicker :native="true" @select="onSelectEmoji"/>
               </div>
@@ -89,15 +87,17 @@
           <p v-if="error" class="modal__error">{{ error }}</p>
 
           <div class="modal__actions">
-            <button class="modal__cancel" type="button" :disabled="loading" @click="close">Cancel
-            </button>
-            <button
+            <CommonButton variant="secondary" class="modal__cancel" type="button" :disabled="loading" @click="close">
+              Cancel
+            </CommonButton>
+            <CommonButton
               class="modal__create"
+              variant="primary"
               type="submit"
               :disabled="loading || !canSubmit || vendorIsUnsupported"
             >
               {{ loading ? 'Creating...' : 'Create' }}
-            </button>
+            </CommonButton>
           </div>
           <div class="modal__comment">{{ vendorIsUnsupportedComment }}</div>
         </form>
@@ -113,7 +113,8 @@ import axios from 'axios'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import type {CreatePostRequest, CreatePostResponse} from '@/types/post.ts'
-import { toSpotifyEmbedUrl } from '@/plugins/useSpotify'
+import {toSpotifyEmbedUrl} from '@/plugins/useSpotify'
+import CommonButton from "@/components/common/CommonButton.vue";
 
 const showEmojiPicker = ref(false)
 const showPreview = ref(false)
@@ -195,7 +196,7 @@ async function createPost() {
     })
     console.log(data)
     if (!data.success) {
-      error.value = 'Failed to create post'
+      error.value = 'Failed to create feed'
       return
     }
 
@@ -204,7 +205,7 @@ async function createPost() {
     if (axios.isAxiosError(err) && typeof err.response?.data?.detail === 'string') {
       error.value = err.response.data.detail
     } else {
-      error.value = 'Failed to create post, ping @qwrttqr'
+      error.value = 'Failed to create feed, ping @qwrttqr'
     }
   } finally {
     loading.value = false
@@ -237,8 +238,9 @@ async function createPost() {
   &__header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: space-around;
     margin-bottom: 18px;
+    text-align: center;
   }
 
   &__title {
@@ -246,6 +248,7 @@ async function createPost() {
     color: var(--tg-theme-text-color, #fff);
     font-size: 17px;
     font-weight: 600;
+    text-align: center;
   }
 
   &__close {
@@ -391,11 +394,8 @@ async function createPost() {
 
   &__preview-toggle {
     align-self: flex-start;
-    margin-top: 6px;
-    padding: 4px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
-    background: transparent;
+    background: rgb(36 129 204 / 0.1);
     color: var(--tg-theme-link-color, #4a9eff);
     font-size: 12px;
     cursor: pointer;

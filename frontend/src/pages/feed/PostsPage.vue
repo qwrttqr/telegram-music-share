@@ -68,7 +68,7 @@ async function loadPosts() {
 function handlePostCreated() {
   showCreateModal.value = false
   loadPosts()
-  // Todo: add post returning on backend so it will add it into posts instead of refetching from backend
+  // Todo: add feed returning on backend so it will add it into posts instead of refetching from backend
 }
 
 onMounted(loadPosts)
