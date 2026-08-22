@@ -8,6 +8,7 @@ from routing.pydantic.responses.posts.delete_post_response import ResponseDelete
 from routing.pydantic.responses.posts.get_user_posts_response import ResponseUserPosts, UserPostEntity
 
 from routing.pydantic.responses.posts.create_post_response import ResponseCreatePost
+from routing.pydantic.responses.posts.posts_for_feed_response import FeedSchema, AuthorSchema, ResponseFeed
 from services.PostsManager import PostsManager
 from utils.get_current_user import get_current_user
 
@@ -30,6 +31,40 @@ async def get_user_posts(
     posts = [UserPostEntity.model_validate(row) for row in posts]
     return ResponseUserPosts(posts=posts, total=total)
 
+@router.get("/get_feed_posts", tags=["posts"])
+async def get_feed_posts(
+        page: int,
+        per_page: int,
+        telegram_user: User = Depends(get_current_user),
+        database_session: AsyncSession = Depends(get_db_session)
+) -> ResponseFeed:
+    rows, total = await PostsManager.get_feed_posts(
+        current_user_id=telegram_user.id,
+        page=page,
+        per_page=per_page,
+        database_session=database_session
+    )
+    posts = [
+        FeedSchema(
+            id=row.post_id,
+            vendor=row.vendor,
+            title=row.title,
+            comment=row.comment,
+            link=row.link,
+            created_at=row.created_at,
+            author=AuthorSchema(
+                id=row.author_id,
+                telegram_id=row.telegram_id,
+                tg_username=row.tg_username,
+                photo_url=row.photo_url,
+                first_name=row.first_name,
+                last_name=row.last_name,
+            ),
+            seen=row.seen
+        )
+        for row in rows
+    ]
+    return ResponseFeed(posts=posts, total=total)
 
 @router.post("/create_post", tags=["posts"])
 async def create_post(

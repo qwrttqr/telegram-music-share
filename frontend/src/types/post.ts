@@ -26,6 +26,7 @@ export interface Post extends BasePost {
     first_name: string | null
     last_name: string | null
   }
+  seen: boolean
 }
 
 export type MyPost = BasePost

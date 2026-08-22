@@ -54,7 +54,6 @@
 
         <div v-for="friend in friends" :key="friend.telegram_id" class="friends-list__card">
 
-          {{friend}}
           <ProfileHeader
             :contentJustify="'start'"
             :photo-url="friend.photo_url"

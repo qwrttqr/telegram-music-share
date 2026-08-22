@@ -1,12 +1,16 @@
 <template>
   <article class="post-card">
-    <ProfileHeader
-      v-if="isForeign(post)"
-      :content-justify="'start'"
-      :photo-url="post.author.photo_url"
-      :display-name="displayName"
-      :username="post.author.tg_username"
-    />
+    <div class="post-card__top" v-if="isForeign(post)">
+      <ProfileHeader
+        :content-justify="'start'"
+        :photo-url="post.author.photo_url"
+        :display-name="displayName"
+        :username="post.author.tg_username"
+      />
+      <p v-if="post.seen" class="post-card__seen">
+        Already seen
+      </p>
+    </div>
 
     <div class="post-card__content" :class="{ 'post-card__content--no-header': !isForeign(post) }">
       <div class="post-card__title-block">
@@ -14,7 +18,7 @@
           <h3 class="post-card__title">{{ post.title }}</h3>
           <p class="post-card__comment">{{ post.comment }}</p>
         </div>
-        <DeleteButton @click="deletePost(post.id)"/>
+        <DeleteButton v-if="!isForeign(post)" @click="deletePost(post.id)"/>
       </div>
 
       <div v-if="embedUrl" class="post-card__media">
@@ -76,11 +80,12 @@ function toSpotifyUri(link: string): string {
 }
 
 async function deletePost(id: number) {
-  const {data} = await http.delete<{success: boolean}>(`/posts/delete_post/${id}`)
+  const {data} = await http.delete<{ success: boolean }>(`/posts/delete_post/${id}`)
   if (data.success) {
     emit('onDeleted', id)
   }
 }
+
 const formattedDate = computed(() => new Date(props.post.created_at).toLocaleDateString())
 
 onMounted(async () => {
@@ -111,6 +116,11 @@ onMounted(async () => {
     &--no-header {
       margin-top: 0;
     }
+  }
+
+  &__top {
+    display: flex;
+    justify-content: space-between;
   }
 
   &__title {
@@ -158,6 +168,10 @@ onMounted(async () => {
     margin-top: 10px;
     color: var(--tg-theme-hint-color, #999);
     font-size: 12px;
+  }
+
+  &__seen {
+    color: rgb(66 172 255 / 0.5);
   }
 }
 </style>

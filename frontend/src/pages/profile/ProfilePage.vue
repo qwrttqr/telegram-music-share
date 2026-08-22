@@ -4,6 +4,13 @@
       <h3>
         Your posts
       </h3>
+      <CommonButton
+        :variant="'circle'"
+        :type="'button'"
+        @click="showCreateModal = true"
+      >
+        <span class="material-icons posts-header__create__material-icons">add</span>
+      </CommonButton>
       <CommonButton class="profile-page__header__reload" variant="circle" type="button"
                     @click="retry">
         <span class="material-icons">refresh</span>
@@ -33,6 +40,11 @@
       </div>
     </section>
   </div>
+  <CreatePostModal
+    v-if="showCreateModal"
+    @close="showCreateModal = false"
+    @created="handlePostCreated"
+  />
 </template>
 
 <script setup lang="ts">
@@ -42,6 +54,7 @@ import PostCard from '@/components/posts/PostCard.vue'
 import CommonSpinner from '@/components/common/CommonSpinner.vue'
 import CommonButton from '@/components/common/CommonButton.vue'
 import type {MyPost} from '@/types/post.ts'
+import CreatePostModal from "@/components/posts/CreatePostModal.vue";
 
 interface ResponseUserPosts {
   posts: MyPost[]
@@ -58,7 +71,9 @@ const error = ref(false)
 
 const hasMore = computed(() => myPosts.value.length < total.value || page.value === 1)
 
-async function loadMore() {
+const showCreateModal = ref(false)
+
+async function loadMore(updatePagination: boolean = true) {
   if (loading.value || (!hasMore.value && page.value > 1)) return
 
   loading.value = true
@@ -69,8 +84,10 @@ async function loadMore() {
       params: {page: page.value, per_page: PER_PAGE},
     })
     myPosts.value.push(...data.posts)
+    if (updatePagination) {
+      page.value += 1
+    }
     total.value = data.total
-    page.value += 1
   } catch {
     error.value = true
   } finally {
@@ -78,11 +95,16 @@ async function loadMore() {
   }
 }
 
+function handlePostCreated() {
+  showCreateModal.value = false
+  retry()
+}
+
 function removeFromFeed(id: number) {
   myPosts.value = myPosts.value.filter(post => post.id !== id)
 }
 function retry() {
-  loadMore()
+  loadMore(false)
 }
 
 const sentinel = ref<HTMLElement | null>(null)
