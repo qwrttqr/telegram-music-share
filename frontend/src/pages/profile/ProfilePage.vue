@@ -14,6 +14,7 @@
         v-for="post in myPosts"
         :key="post.id"
         :post="post"
+        @onDeleted="removeFromFeed"
       />
 
       <p v-if="!loading && !myPosts.length && !error" class="profile-posts__empty">
@@ -77,6 +78,9 @@ async function loadMore() {
   }
 }
 
+function removeFromFeed(id: number) {
+  myPosts.value = myPosts.value.filter(post => post.id !== id)
+}
 function retry() {
   loadMore()
 }

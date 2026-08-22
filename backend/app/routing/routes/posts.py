@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.core.engine import get_db_session
 from db.models import User
 from routing.pydantic.requests.posts.create_post import RequestCreatePost
+from routing.pydantic.responses.posts.delete_post_response import ResponseDeletePost
 from routing.pydantic.responses.posts.get_user_posts_response import ResponseUserPosts, UserPostEntity
 
 from routing.pydantic.responses.posts.create_post_response import ResponseCreatePost
@@ -42,3 +43,20 @@ async def create_post(
         database_session=database_session
     )
     return ResponseCreatePost(success=True) if res else ResponseCreatePost(success=False)
+
+
+@router.delete("/delete_post/{post_id}", tags=["posts"])
+async def delete_post(
+        post_id: int,
+        telegram_user: User = Depends(get_current_user),
+        database_session: AsyncSession = Depends(get_db_session)
+) -> ResponseDeletePost:
+    res = await PostsManager.delete_post(
+        post_id=post_id,
+        current_user_id=telegram_user.id,
+        database_session=database_session
+    )
+    if res:
+        return ResponseDeletePost(success=True)
+    else:
+        return ResponseDeletePost(success=False)

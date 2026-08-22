@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, Row
+from sqlalchemy import select, func, Row, and_
 from db.models import User, Post
 from db.models.Post import TrackVendor
+
 
 class PostsManager:
 
@@ -62,3 +63,18 @@ class PostsManager:
         database_session.add(post)
         await database_session.commit()
         return True
+
+    @staticmethod
+    async def delete_post(
+            post_id: int,
+            current_user_id: int,
+            database_session: AsyncSession
+    ) -> bool:
+        stmt = select(Post).where(and_(Post.author == current_user_id, Post.id == post_id))
+        post = (await database_session.execute(stmt)).scalars().first()
+        if post:
+            await database_session.delete(post)
+            await database_session.commit()
+            return True
+
+        return False

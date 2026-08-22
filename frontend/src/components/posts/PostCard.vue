@@ -14,7 +14,7 @@
           <h3 class="post-card__title">{{ post.title }}</h3>
           <p class="post-card__comment">{{ post.comment }}</p>
         </div>
-        <DeleteButton />
+        <DeleteButton @click="deletePost(post.id)"/>
       </div>
 
       <div v-if="embedUrl" class="post-card__media">
@@ -42,9 +42,14 @@ import {
 } from "@/services/spotifyController.ts";
 import {useSpotifyControllerStore} from "@/stores/spotifyController.ts";
 import DeleteButton from "@/components/common/deleteButton.vue";
+import http from "@/plugins/http.ts";
 
 const props = defineProps<{
   post: Post | MyPost
+}>()
+
+const emit = defineEmits<{
+  onDeleted: [id: number]
 }>()
 
 const embedEl = ref<HTMLElement | null>(null)
@@ -70,6 +75,12 @@ function toSpotifyUri(link: string): string {
   return `spotify:track:${match[1]}`
 }
 
+async function deletePost(id: number) {
+  const {data} = await http.delete<{success: boolean}>(`/posts/delete_post/${id}`)
+  if (data.success) {
+    emit('onDeleted', id)
+  }
+}
 const formattedDate = computed(() => new Date(props.post.created_at).toLocaleDateString())
 
 onMounted(async () => {

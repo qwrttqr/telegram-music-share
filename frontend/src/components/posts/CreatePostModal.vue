@@ -194,7 +194,6 @@ async function createPost() {
       title: form.value.title.trim(),
       comment: form.value.comment.trim(),
     })
-    console.log(data)
     if (!data.success) {
       error.value = 'Failed to create feed'
       return
