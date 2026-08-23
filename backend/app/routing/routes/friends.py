@@ -9,18 +9,19 @@ from routing.pydantic.responses.friends.accepted_invite_response import Response
 from routing.pydantic.responses.friends.delete_friend_response import ResponseDeleteFriend
 from routing.pydantic.responses.friends.friendship_token_response import ResponseFriendshipTokenResponse
 from routing.pydantic.responses.friends.get_friends_list import ResponseFriendsList
-from services.UserManager import UserManager
-from utils.get_current_user import get_current_user
+from services.friends_token_service import FriendsTokenService
+from services.user_service import UserService
+from utils.dependencies import get_current_user, get_friends_token_service, get_user_service
 
 router = APIRouter(prefix="/friends")
 
 
 @router.get("/create_friendship_token", tags=["friends"])
 async def create_friendship_token(
-        telegram_user: User | None = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        telegram_user: User = Depends(get_current_user),
+        friends_token_service: FriendsTokenService = Depends(get_friends_token_service)
 ) -> ResponseFriendshipTokenResponse:
-    token = await UserManager.create_friendship_token(creator_id=telegram_user.id, database_session=database_session)
+    token = await friends_token_service.create_friendship_token(creator_id=telegram_user.id)
     if token:
         return ResponseFriendshipTokenResponse(success=True, token=token)
     else:
@@ -31,13 +32,12 @@ async def create_friendship_token(
 async def accept_invite(
         body: RequestAcceptFriendRequest,
         telegram_user: User | None = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        user_service: UserService = Depends(get_user_service),
 ) -> ResponseFriendRequestAccepted:
     try:
-        res = await UserManager.accept_friendship_invite(
+        res = await user_service.accept_friendship_invite(
             token=body.token,
             current_user_id=telegram_user.id,
-            database_session=database_session,
         )
         if res:
             return ResponseFriendRequestAccepted(success=True, message="Friend request accepted")
@@ -50,9 +50,9 @@ async def accept_invite(
 @router.get("/get_friends", tags=["friends"])
 async def get_friends_list(
         telegram_user: User = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        user_service: UserService = Depends(get_user_service)
 ) -> ResponseFriendsList:
-    friends_list = await UserManager.get_friends_list(telegram_user.id, database_session)
+    friends_list = await user_service.get_friends_list(telegram_user.id)
     return ResponseFriendsList.model_validate({"friends": friends_list})
 
 
@@ -60,12 +60,11 @@ async def get_friends_list(
 async def delete_friend(
         body: RequestDeleteFromFriends,
         telegram_user: User = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        user_service: UserService = Depends(get_user_service),
 ) -> ResponseDeleteFriend:
-    res = await UserManager.delete_from_friends(
+    res = await user_service.delete_from_friends(
         friend_id=body.friend_id,
         current_user_id=telegram_user.id,
-        database_session=database_session
     )
     if res:
         return ResponseDeleteFriend(success=True, message="Successfully deleted")

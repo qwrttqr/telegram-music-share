@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.core.engine import get_db_session
 from db.models import User
 from routing.pydantic.requests.posts.create_post import RequestCreatePost
 from routing.pydantic.responses.posts.delete_post_response import ResponseDeletePost
@@ -9,8 +7,8 @@ from routing.pydantic.responses.posts.get_user_posts_response import ResponseUse
 
 from routing.pydantic.responses.posts.create_post_response import ResponseCreatePost
 from routing.pydantic.responses.posts.posts_for_feed_response import FeedSchema, AuthorSchema, ResponseFeed
-from services.PostsManager import PostsManager
-from utils.get_current_user import get_current_user
+from services.posts_service import PostsService
+from utils.dependencies import get_posts_service, get_current_user
 
 router = APIRouter(prefix="/posts")
 
@@ -20,29 +18,28 @@ async def get_user_posts(
         page: int,
         per_page: int,
         telegram_user: User = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        posts_service: PostsService = Depends(get_posts_service)
 ) -> ResponseUserPosts:
-    posts, total = await PostsManager.get_user_posts(
+    posts, total = await posts_service.get_user_posts(
         current_user_id=telegram_user.id,
         page=page,
         per_page=per_page,
-        database_session=database_session
     )
     posts = [UserPostEntity.model_validate(row) for row in posts]
     return ResponseUserPosts(posts=posts, total=total)
+
 
 @router.get("/get_feed_posts", tags=["posts"])
 async def get_feed_posts(
         page: int,
         per_page: int,
         telegram_user: User = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        posts_service: PostsService = Depends(get_posts_service)
 ) -> ResponseFeed:
-    rows, total = await PostsManager.get_feed_posts(
+    rows, total = await posts_service.get_feed_posts(
         current_user_id=telegram_user.id,
         page=page,
         per_page=per_page,
-        database_session=database_session
     )
     posts = [
         FeedSchema(
@@ -66,16 +63,16 @@ async def get_feed_posts(
     ]
     return ResponseFeed(posts=posts, total=total)
 
+
 @router.post("/create_post", tags=["posts"])
 async def create_post(
         data: RequestCreatePost,
         telegram_user: User = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        posts_service: PostsService = Depends(get_posts_service)
 ) -> ResponseCreatePost:
-    res = await PostsManager.create_post(
+    res = await posts_service.create(
         current_user_id=telegram_user.id,
         **data.model_dump(),
-        database_session=database_session
     )
     return ResponseCreatePost(success=True) if res else ResponseCreatePost(success=False)
 
@@ -84,12 +81,11 @@ async def create_post(
 async def delete_post(
         post_id: int,
         telegram_user: User = Depends(get_current_user),
-        database_session: AsyncSession = Depends(get_db_session)
+        posts_service: PostsService = Depends(get_posts_service)
 ) -> ResponseDeletePost:
-    res = await PostsManager.delete_post(
+    res = await posts_service.delete(
         post_id=post_id,
         current_user_id=telegram_user.id,
-        database_session=database_session
     )
     if res:
         return ResponseDeletePost(success=True)
