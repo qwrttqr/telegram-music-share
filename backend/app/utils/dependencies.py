@@ -5,7 +5,7 @@ from db.core.engine import get_db_session
 from db.models import User
 from db.repositories.friendship_repo import FriendshipRepo
 from db.repositories.posts_repo import PostsRepo
-from db.repositories.token_repo import FriendshipTokenRepo
+from db.repositories.token_repo import FriendshipTokensRepo
 from db.repositories.user_repo import UsersRepo
 from services.friends_token_service import FriendsTokenService
 from services.posts_service import PostsService
@@ -20,8 +20,8 @@ def get_users_repo(database_session: AsyncSession = Depends(get_db_session)) -> 
     return UsersRepo(database_session=database_session)
 
 
-def get_friends_token_repo(database_session: AsyncSession = Depends(get_db_session)) -> FriendshipTokenRepo:
-    return FriendshipTokenRepo(database_session=database_session)
+def get_friends_token_repo(database_session: AsyncSession = Depends(get_db_session)) -> FriendshipTokensRepo:
+    return FriendshipTokensRepo(database_session=database_session)
 
 
 def get_posts_repo(database_session: AsyncSession = Depends(get_db_session)) -> PostsRepo:
@@ -34,7 +34,7 @@ def get_friendship_repo(database_session: AsyncSession = Depends(get_db_session)
 
 def get_friends_token_service(
         users_repo: UsersRepo = Depends(get_users_repo),
-        token_repo: FriendshipTokenRepo = Depends(get_friends_token_repo),
+        token_repo: FriendshipTokensRepo = Depends(get_friends_token_repo),
         database_session: AsyncSession = Depends(get_db_session),
 ) -> FriendsTokenService:
     return FriendsTokenService(users_repo=users_repo, token_repo=token_repo, database_session=database_session)
@@ -49,7 +49,7 @@ def get_posts_service(
 
 def get_user_service(
         users_repo: UsersRepo = Depends(get_users_repo),
-        token_repo: FriendshipTokenRepo = Depends(get_friends_token_repo),
+        token_repo: FriendshipTokensRepo = Depends(get_friends_token_repo),
         friendship_repo: FriendshipRepo = Depends(get_friendship_repo),
         database_session: AsyncSession = Depends(get_db_session)
 ) -> UserService:

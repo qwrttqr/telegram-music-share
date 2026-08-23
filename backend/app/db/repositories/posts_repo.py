@@ -99,7 +99,7 @@ class PostsRepo:
             self,
             user_id: int,
             posts: list[Row]
-    ):
+    ) -> None:
         self.db_session.add_all(
             PostSeen(post_id=post.id, user_id=user_id) for post in posts
         )

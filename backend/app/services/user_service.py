@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import User, Friendship
 from db.repositories.friendship_repo import FriendshipRepo
-from db.repositories.token_repo import FriendshipTokenRepo
+from db.repositories.token_repo import FriendshipTokensRepo
 from db.repositories.user_repo import UsersRepo
 
 
@@ -12,12 +12,12 @@ class UserService:
     def __init__(
             self,
             users_repo: UsersRepo,
-            token_repo: FriendshipTokenRepo,
+            token_repo: FriendshipTokensRepo,
             friendship_repo: FriendshipRepo,
             database_session: AsyncSession
     ):
         self.users_repo = users_repo
-        self.token_repo = token_repo
+        self.friendship_tokens_repo = token_repo
         self.friendship_repo = friendship_repo
         self.database_session = database_session
 
@@ -27,7 +27,7 @@ class UserService:
             tg_username: str | None,
             tg_first_name: str,
             tg_last_name: str,
-            tg_photo_url: str,
+            tg_photo_url: str
     ) -> bool:
         """
         Tries to create user in database
@@ -60,7 +60,7 @@ class UserService:
             token: str,
             current_user_id: int,
     ) -> bool:
-        friend_token = await self.token_repo.get_by_token(token=token)
+        friend_token = await self.friendship_tokens_repo.get_by_token(token=token)
 
         if friend_token is None:
             return False  # token not found / already used
@@ -73,7 +73,7 @@ class UserService:
         id_1, id_2 = min(creator_id, current_user_id), max(creator_id, current_user_id)
         await self.friendship_repo.add(Friendship(user_1_id=id_1, user_2_id=id_2))
 
-        await self.token_repo.delete(friend_token)
+        await self.friendship_tokens_repo.delete(friend_token)
         try:
             await self.database_session.commit()
         except IntegrityError:

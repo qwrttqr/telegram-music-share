@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import FriendsToken
 
 
-class FriendshipTokenRepo:
+class FriendshipTokensRepo:
     def __init__(self, database_session: AsyncSession):
         self.db_session = database_session
 
